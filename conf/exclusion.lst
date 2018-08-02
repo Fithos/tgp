@@ -1,0 +1,4 @@
+java.lang.Object.<init>
+java.lang.invoke.*.*
+cz.cuni.mff.d3s.perf.*.*
+cz.cuni.mff.d3s.perf.BenchmarkResultsBenchmark.*

@@ -1,0 +1,93 @@
+<?xml version="1.0"?>
+<project name="tgp">
+
+    <property name="src.dir" value="src"/>
+    <property name="testapp.src.dir" value="testapp/src"/>
+    <property name="lib.dir" value="lib"/>
+    <property name="out.dir" value="output"/>
+	<property name="conf.dir" value="conf"/>
+    <property name="inst.build.dir" value="${out.dir}/inst"/>
+    <property name="testapp.build.dir" value="${out.dir}/app"/>
+	<property name="include.file" value="include.txt"/>
+	<property name="build.prefix" value="tgp-"/>
+	<property name="input.dir" value="input" />
+    	
+    <path id="lib-classpath" description="Classpath for libraries.">
+        <fileset dir="${lib.dir}" includes="**/*.jar"/>
+    </path>
+	
+    <target name="info" description="Information about the project.">
+        <echo>tgp: a task granularity profiler for the JVM</echo>
+    </target>
+
+    <target name="clean" description="Deletes preprocessed files, compilation and packaging output.">
+        <delete dir="${out.dir}"/>
+        <delete>
+            <fileset dir="${input.dir}">
+                <include name="**/*" />
+            </fileset>
+        </delete>
+    </target>
+
+    <target name="compile-app" description="Compiles the test application.">
+        <mkdir dir="${testapp.build.dir}"/>
+        <javac destdir="${testapp.build.dir}"  includeAntRuntime="false">
+            <src path="${testapp.src.dir}"/>
+            <classpath refid="lib-classpath"/>
+        </javac>
+    </target>
+
+    <target name="build-app" depends="compile-app" description="Builds test application.">
+        <jar destfile="${out.dir}/testapp.jar" basedir="${testapp.build.dir}">
+            <manifest>
+                <attribute name="Main-Class" value="ch.usi.dag.tgp.test.TestRunAndJoin" />
+            </manifest>
+        </jar>
+    </target>
+
+    <target name="compile-inst" description="Compiles instrumentation.">
+        <mkdir dir="${inst.build.dir}"/>
+        <javac destdir="${inst.build.dir}"  includeAntRuntime="false">
+            <src path="${src.dir}"/>
+            <classpath refid="lib-classpath"/>
+        </javac>
+    </target>
+    
+	 <target name="build-task-bc" depends="compile-inst" description="Builds tgp to profile bytecode count to measure task granularity.">
+	        <jar destfile="${out.dir}/${build.prefix}task-bc.jar" basedir="${inst.build.dir}" 
+	        	includesfile="${conf.dir}/task-bc/${include.file}" excludes="MANIFEST.MF" manifest="${conf.dir}/task-bc/MANIFEST.MF" />
+    </target>
+	
+    <target name="build-task-rc" depends="compile-inst" description="Builds tgp to profile reference-cycles count to measure task granularity.">
+            <jar destfile="${out.dir}/${build.prefix}task-rc.jar" basedir="${inst.build.dir}"
+		        	includesfile="${conf.dir}/task-hpc/${include.file}" excludes="MANIFEST.MF" manifest="${conf.dir}/task-hpc/MANIFEST.MF" />
+    </target>
+	
+	<target name="build-cc" depends="compile-inst" description="Builds tgp to perform calling-context profiling.">
+            <jar destfile="${out.dir}/${build.prefix}cc.jar" basedir="${inst.build.dir}"
+			        	includesfile="${conf.dir}/cc/${include.file}" excludes="MANIFEST.MF" manifest="${conf.dir}/cc/MANIFEST.MF" />
+    </target>
+		
+    <target name="profile-task-bc" depends="build-task-bc,build-app,preprocess" description="Runs the test application profiling bytecode count to measure task granularity">
+	      <exec executable="bin/profile.sh">
+              <arg value="task-bc" />
+	      </exec>	      
+    </target>
+	
+	<target name="profile-task-rc" depends="build-task-rc,build-app,preprocess" description="Runs the test application profiling reference-cycles count to measure task granularity.">
+         <exec executable="bin/profile.sh">
+			<arg value="task-rc" />
+         </exec>
+    </target>
+		
+	<target name="profile-cc" depends="build-cc,build-app,preprocess" description="Runs the test application profiling calling contexts.">
+         <exec executable="bin/profile.sh">
+             <arg value="cc" />
+         </exec>
+    </target>
+	
+	<target name="preprocess" description="Preprocess the target classes.">
+        <exec executable="preprocesser/bin/preprocess.sh" />
+    </target>
+
+</project>
