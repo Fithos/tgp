@@ -18,7 +18,7 @@ In addition, *tgp* profiles calling contexts, i.e., all methods open on the call
     * [Usage](#usage)
        + [Bytecode Profiling](#bytecode-profiling)
        + [Reference-cycles Profiling](#reference-cycles-profiling)
-       + [JVM- and OS-layer Metrics](#jvm-and-os-layer-metrics)
+       + [JVM- and OS-layer Metrics](#jvm--and-os-layer-metrics)
        + [Calling-context Profiling](#calling-context-profiling)
        + [Output](#output)
 6. [Profiling Your Own Application](#profiling-your-own-application)

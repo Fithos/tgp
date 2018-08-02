@@ -13,21 +13,21 @@ set -a
 
 #Sets the classpath of the target application
 #Uncomment to change the classpath of the target application
-#APP_CLASSPATH="classpath/to/your/application/myapp.jar"
+#APP_CLASSPATH="classpath-of-application"
 
 #Sets the flags to be sent to the JVM executing the target application, if any 
 #Uncomment to change the flags to be sent to the JVM executing the target application
 #Flags are assigned with a String value, and are separated by a single space
-#APP_FLAGS="-Xmx1g -Ddag.profile=true"
+#APP_FLAGS="flags-of-application"
 
 #Sets target application main class in the target jar file
 #Uncomment to change main class
-APP_MAIN_CLASS="ch.usi.dag.tgp.test.TestMultipleSubmission"
+#APP_MAIN_CLASS="MainClass"
 
 #Sets the arguments to be sent to the target application, if the application requires them
 #Uncomment to change the arguments to be sent to the target application
 #Arguments should be separated by a single space
-#APP_ARGS="myArg1 myArg2"
+#APP_ARGS="arguments-of-application"
 
 #Prevents any further variable to be exported
 set +a
