@@ -1,0 +1,10 @@
+test_invalid_chain.csv: a chain of tasks spawning tasks, i.e., T1 -> T2 -> ... -> Tn, where there is no valid outer task. The output will be therefore the same as the input
+test_many_invalid_nested.csv: many of the nested task do not comply with the nested task rules. Said nested tasks' outer tasks are also threads. 
+test_mix_outer.csv: in this file some task have an outer task and some have not, i.e., some tasks were spawned by another task while others were not.
+test_no_outer.csv: all tasks are independent, i.e., no task was spawned by another task. The output will be therefore the same as the input
+test_no_threads.csv: all tasks are not threads, therefore all outer tasks are valid.
+test_seven_centre.csv: task with ID 7 is the task from which almost all outer task spawn from, either directly or indirectly. It is therefore expected that task 7 will have a large aggreagated granularity
+test_valid_chain.csv: a chain of tasks spawning tasks, i.e., T1 -> T2 -> ... -> Tn, where all outer tasks are valid. This means that the output will be formed by just one big aggregated task.
+test_valid_threads.csv: all tasks are threads and all their nested tasks are valid nested tasks, i.e., all outer tasks are valid.
+
+Note: notation 'Ti -> Tj' means that task 'Ti' has spawned task 'Tj'.
