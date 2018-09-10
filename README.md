@@ -1,3 +1,5 @@
+Please do not use this branch as it is currently being used for testing purposes.
+
 # tgp
 
 *tgp* is a task-granularity profiler for multi-threaded, task-parallel applications running on the Java Virtual Machine (JVM).
@@ -311,6 +313,6 @@ For example, to profile class *TestNestedThreads*, modify the *application.sh* f
 ### Contributors
 
  * Eduardo Rosales (rosale [at] usi [dot] ch)
- * Federico Van Swaaij (federico [dot] van [dot] swaaij [at] usi [dot] ch)
+ * Federico van Swaaij (federico [dot] van [dot] swaaij [at] usi [dot] ch)
 
 **Note**: Please refer to this [article](https://doi.org/10.1145/3168828) for additional information about *tgp*.
