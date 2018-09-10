@@ -31,8 +31,16 @@ In addition, *tgp* profiles calling contexts, i.e., all methods open on the call
     * [CPU Trace](#cpu-trace)
     * [CS Trace](#cs-trace)
     * [GC Trace](#gc-trace)
-8. [Additional Tests](#additional-tests)
-9. [About](#about)
+8. [Post-processing and Characterization](#post-processing-and-characterization)
+    * [Post-processing](#post-processing)
+        + [Tasks Aggregation](#tasks-aggregation)
+        + [Garbage Collection Filtering](#garbage-collection-filtering)
+    * [Characterization](#characterization)
+        + [Diagnose](#diagnose)
+        + [Fine-grained Tasks](#fine-grained-tasks)
+        + [Coarse-grained Tasks](#coarse-grained-tasks)
+9. [Additional Tests](#additional-tests)
+10. [About](#about)
 
 ## Terminology
 
@@ -275,6 +283,68 @@ End GC,7341135855849462
 The first column represents the event profiled (i.e., the start or the end of a collection cycle), while the second column contains the timestamp associated to the event. 
 
 **Note**: if GC profiling is enabled but this trace is not produced, then no stop-the-world collection occurred during the execution of the target application.
+
+## Post-processing and Characterization
+
+This release comes with tools to further process the files resulting from the *tgp* analysis, with the objective to both getting more accurate measurement and helping the user to characterize tasks as either fine- or coarse-grained.
+
+### Post-processing
+
+Post-processing allows the user to further filter the results produced by the *tgp* analysis: in particular, the user can aggregate tasks and filter context-switches and CPU utilization measurements obtained during garbage collection activity.
+Post-processing tools can be found in the */post-processing* directory.
+
+#### Tasks Aggregation
+
+Some tasks may be *nested*, i.e., they fully execute inside the dynamic extent of the execution method of another task, which is called *outer task*. 
+Since the nested and outer tasks cannot execute in parallel, as a general rule nested tasks are aggregated to their outer task, resulting in a single larger task. If the outer task is itself nested, then it is recursively aggregated until a non-nested task is found.
+
+To perform tasks aggregation on a tasks trace, enter the following command:
+
+`./post-processing/aggregation.py path/to/tasks.csv`
+
+The directory */post-processing/tests-aggregation* contains several tests for the aggregation tool. For example, by running the test *test_valid_chain.csv*, the output should be the following:
+
+```
+ID,Class,Outer Task ID,Execution N.,Creation thread ID,Creation thread class,Creation thread name,Execution thread ID,Execution thread class,Execution thread name,Executor ID,Executor class,Entry execution time,Exit execution time,Granularity,Is Thread,Is Runnable,Is Callable,Is ForkJoinTask,Is run() executed,Is call() executed,Is exec() executed
+6,C6,0,1,0,cl,n,1,etc,etn,1,ec,150,155,130,T,F,F,F,F,T,F
+```
+
+#### Garbage Collection Filtering
+
+While context-switches and CPU utilization measurements are being taken, it is possible that garbage collection is active: this means that these measurements are perturbed by the GC event, thus not accurately reflecting the application's usage.
+To filter out measurements obtained during GC events, enter the following command:
+
+`./post-processing/gc-filtering.py path/to/context-switches.csv path/to/cpu.csv path/to/gc.csv`
+
+The directory */post-processing/tests-gc-filtering* contains several test traces for the filtering tool. For example, by running the tool with *cs.csv*, *cpu_in_cs.csv*, and *gc_in_cs.csv*, the output should be the following (the first one contains the filtered context-switches, the second one the filtered CPU utilization):
+
+```
+Timestamp (ns),Context Switches
+7602317094530472.0,72432.0
+7602317094530478.0,7134328.0
+7602317094530480.0,7234842.0
+7602317094530482.0,82354.0
+7602317094530495.0,8345.0
+7602317094530499.0,71394.0
+7602317094530500.0,81392.0
+```
+
+```
+Timestamp (ns),CPU utilization (user),CPU utilization (system)
+7602317094530479,0.0,25.0
+7602317094530484,50.0,0.0
+7602317094530495,66.7,0.0
+7602317094530499,40.0,0.0
+7602317094530504,0.0,0.0
+```
+
+### Characterization
+
+#### Diagnose
+
+#### Fine-grained Tasks
+
+#### Coarse-grained Tasks
 
 ## Additional Tests
 
