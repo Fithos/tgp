@@ -167,7 +167,7 @@ APP_ARGS="arg1 arg2”
 
 ## Output Files
 
-*tgp* generates *.csv* files in the */traces* directory as follows (note that the directory will be overwritten at each profiling):
+*tgp* generates *.csv* files in the *traces/* directory as follows (note that the directory will be overwritten at each profiling):
 
 ### Task Trace
 
@@ -290,8 +290,8 @@ This release comes with tools to further process the files resulting from the *t
 
 ### Post-processing
 
-Post-processing allows the user to further filter the results produced by the *tgp* analysis: in particular, the user can aggregate tasks and filter context-switches and CPU utilization measurements obtained during garbage collection activity.
-Post-processing tools can be found in the */post-processing* directory.
+Post-processing allows the user to further filter the results produced by the *tgp* analysis: in particular, the user can aggregate tasks and filter out context-switches and CPU utilization measurements obtained during garbage collection activity.
+Post-processing tools can be found in the *post-processing/* directory.
 
 #### Tasks Aggregation
 
@@ -302,12 +302,14 @@ To perform tasks aggregation on a tasks trace, enter the following command:
 
 `./post-processing/aggregation.py path/to/tasks.csv`
 
-The directory */post-processing/tests-aggregation* contains several tests for the aggregation tool. For example, by running the test *test_valid_chain.csv*, the output should be the following:
+The directory *post-processing/tests-aggregation/* contains several tests for the aggregation tool. For example, by running the test *test_valid_chain.csv*, the output should be the following:
 
 ```
 ID,Class,Outer Task ID,Execution N.,Creation thread ID,Creation thread class,Creation thread name,Execution thread ID,Execution thread class,Execution thread name,Executor ID,Executor class,Entry execution time,Exit execution time,Granularity,Is Thread,Is Runnable,Is Callable,Is ForkJoinTask,Is run() executed,Is call() executed,Is exec() executed
 6,C6,0,1,0,cl,n,1,etc,etn,1,ec,150,155,130,T,F,F,F,F,T,F
 ```
+
+**Note: more details on the tool and its parameters can be found at post-processing/aggregation.py in the documentation section.**
 
 #### Garbage Collection Filtering
 
@@ -316,7 +318,7 @@ To filter out measurements obtained during GC events, enter the following comman
 
 `./post-processing/gc-filtering.py path/to/context-switches.csv path/to/cpu.csv path/to/gc.csv`
 
-The directory */post-processing/tests-gc-filtering* contains several test traces for the filtering tool. For example, by running the tool with *cs.csv*, *cpu_in_cs.csv*, and *gc_in_cs.csv*, the output should be the following (the first one contains the filtered context-switches, the second one the filtered CPU utilization):
+The directory *post-processing/tests-gc-filtering/* contains several test traces for the filtering tool. For example, by running the tool with *cs.csv*, *cpu_in_cs.csv*, and *gc_in_cs.csv*, the output should be the following (the first one contains the filtered context-switches, the second one the filtered CPU utilization):
 
 ```
 Timestamp (ns),Context Switches
@@ -338,13 +340,101 @@ Timestamp (ns),CPU utilization (user),CPU utilization (system)
 7602317094530504,0.0,0.0
 ```
 
+**Note: more details on the tool and its parameters can be found at post-processing/gc-filtering.py in the documentation section.**
+
 ### Characterization
+
+Characterization tools are meant to guide the user to distinguish between fine- and coarse-grained tasks: this distinction can be made based on different thresholds, thus allowing the user to customize the analysis.
+Characterization tools can be found in the *characterization/* directory.
+
+Directory *characterization/tests/* contains tests for all the following tools.
+
+**Note: for more accurate results, traces containing context-switches and CPU utilization should have first been filtered (see [Garbage Collection Filtering](#garbage-collection-filtering)).**
 
 #### Diagnose
 
+This tool provides statistics on tasks' granularity and the average of both the number of context-switches and CPU utilization. The goal of this tool is to provide a first indication as to whether tasks spawned by the application are fine- or coarse-grained. The tool also includes the possibility to perform this analysis on tasks belonging to a specific class.
+
+To perform diagnostics on tasks, enter the following command:
+
+`./characterization/diagnose.py path/to/tasks.csv path/to/context-switches.csv path/to/cpu.csv specific_class specific_granularity`
+
+As an example, running the tool as following:
+
+`./characterization/diagnose.py characterization/test-tasks.csv characterization/test-cs.csv characterization/test-cpu.csv null 100000`
+
+yields the following result (stdout):
+
+```
+TASKS STATISTICS
+-> Average granularity: 2965486.24138
+-> Median granularity: 34436
+-> IQC: 244672
+-> Whiskers range: [0, 612242.0]
+-> Percentage of tasks having granularity within whiskers range: 79.3103448276%
+-> Percentage of tasks with granularity around 100000: 37.9310344828%
+
+CONTEXT-SWITCHES STATISTICS
+-> Average context-switches: 141.567567568cs/100ms
+
+CPU STATISTICS
+-> Average CPU utilization: 40.8868421053+-4.49185598114
+```
+
+**Note: more details on the tool and its parameters can be found at characterization/diagnose.py in the documentation section.**
+
 #### Fine-grained Tasks
 
+This tool finds classes containing only fine-grained tasks based on user-defined thresholds. The tool then associates to each class the total granulairity (i.e., the sum of the granularities of all its tasks) and the total number of context-switches occurring during its tasks execution.
+
+To run this tool, enter the following command:
+
+`./path/to/fine_grained.py path/to/tasks.csv path/to/cs.csv number_of_cores maximum_range_between_tasks_granularity_in_same_class greater_than_average minimum_number_tasks_in_same_class maximum_task_granularity`
+
+As an example, running the tool as following:
+
+`./fine_grained.py tests/test-tasks.csv tests/test-cs.csv 0 1000 false 0 10000000`
+
+yields the following result (stdout): 
+
+```
+Class: class6 -> Total granularity: 1443 -> Number of context-switches: 395.0
+Class: class7 -> Total granularity: 4 -> Number of context-switches: 0
+```
+
+**Note: more details on the tool and its parameters can be found at characterization/fine_grained.py in the documentation section.**
+
 #### Coarse-grained Tasks
+
+This tool finds classes containing only coarse-grained tasks based on user-defined thresholds. The tool then associates to each class the total granualrity, the total number of context-switches and the average CPU utilization (both user and kernel components) occurring during its tasks execution.
+
+To run this tool, enter the following command:
+
+`./path/to/coarse_grained.py path/to/tasks.csv path/to/cs.csv path/to/cpu.csv number_of_cores minimum_granularity cores_option`
+
+As an example, running the tool as following:
+
+``
+
+yields the following result (stdout):
+
+```
+CLASSES CONTAINING COARSE-GRAINED TASKS:
+-> Class: class6
+   Total granularity: 1443
+   Number of context-switches: 395.0
+   Average CPU utilization: 38.2
+-> Class: class5
+   Total granularity: 903914
+   Number of context-switches: 649.0
+   Average CPU utilization: 34.45
+-> Class: class3
+   Total granularity: 4170898
+   Number of context-switches: 1296.0
+   Average CPU utilization: 33.4857142857
+```
+
+**Note: more details on the tool and its parameters can be found at characterization/coarse_grained.py in the documentation section.**
 
 ## Additional Tests
 
