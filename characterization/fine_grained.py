@@ -4,17 +4,18 @@ import sys
 import csv
 
 '''
-This program associates to each class containing only fine-grained tasks the total granularity and the total number of context-switchest occurring during its tasks' execution.
+This program associates to each class containing only fine-grained tasks the total granularity and the total number of context-switches occurring during its tasks' execution.
 
 Tasks within the same class are considered fine-grained if:
 -> their number is greater than the provided number of cores
+-> all their granularities are smaller or equal to the specified one
 -> all their granularities lie within the specified relative range
--> thir number is greater or equal then the average number of tasks per class
+-> their number is greater or equal then the average number of tasks per class
 -> their number is greater or equal to the specified minimum number of tasks
 
 The results are both printed via standard output and written to a csv file named 'fine-grained.csv'.
 
-Usage: ./path/to/classification.py path/to/tasks.csv path/to/cs.csv number_of_cores maximum_range_between_tasks_granularity_in_same_class greater_than_average minimum_number_tasks_in_same_class maximum_task_granularity
+Usage: ./path/to/fine_grained.py path/to/tasks.csv path/to/cs.csv number_of_cores maximum_range_between_tasks_granularity_in_same_class greater_than_average minimum_number_tasks_in_same_class maximum_task_granularity
 
 Parameters:
 -> path/to/tasks.csv: the csv file containing tasks on which to check whether they are fine grained
@@ -162,7 +163,7 @@ def are_finegrained(array):
     return condition
 
 '''
-For each class, this functions counts the total number of context-switches occurring during the execution of the class's tasks. 
+For each class, this functions counts the total number of context-switches occurring during the execution of the class's tasks.
 This count only takes place all granularities of tasks inside a class fall within the same relative range.
 '''
 def finegrained_contextswitches():

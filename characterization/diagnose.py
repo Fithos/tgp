@@ -13,7 +13,7 @@ Parameters:
 -> path/to/tasks.csv: the csv file containing context-switches data. This file should be a filtered one (see gc-filtering.py).
 -> path/to/cpu.csv: the csv file containing CPU utilization data. This file should be a filtered one (see gc-filtering.py).
 Note: files 'path/to/tasks.csv', 'path/to/tasks.csv', and 'path/to/cpu.csv' should be produced by the same analysis.
--> specific_class: a specific class on which to focus the analysis. For example, if 'specific_class' is 'ExampleClass', then all statistics will be referred to tasks belonging to 'ExampleClass', and ignoring the rest. If no specific class is to be focused on, then this value should be set to 'false'.
+-> specific_class: a specific class on which to focus the analysis. For example, if 'specific_class' is 'ExampleClass', then all statistics will be referred to tasks belonging to 'ExampleClass', and ignoring the rest. If no specific class is to be focused on, then this value should be set to 'null'.
 -> specific_granularity: is used to compute the percentage of tasks whose granularity has the same order of magnitude of 'specific_granularity'. 
 '''
 
@@ -115,7 +115,7 @@ def read_tasks():
                 this_gran = long(row[14])
                 #Checks that task has been executed
                 if this_entry >= 0 and this_exit >= 0:
-                    if specific_class != "false":
+                    if specific_class != "null":
                         if this_class == specific_class:
                             tasks.append(Task(this_id, this_class, this_entry, this_exit, this_gran))
                             global total_grans
@@ -337,7 +337,7 @@ def write_stats():
         writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
         writer.writeheader() 
         content = {}
-        if specific_class != "false":
+        if specific_class != "null":
             content["Selected class"] = specific_class
         else:
             content["Selected class"] = "no class selected"
