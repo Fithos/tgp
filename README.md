@@ -394,7 +394,7 @@ CPU STATISTICS
 
 Now, if a task having granularity around 2000000 is characterized as fine-grained, then the user can run the tool for fine-grained tasks, as the average task granularity detected was 2965486.24138.
 
-On the other hand, if a task having granularity over 30000 is characterized as coarse-grained, then the user might want to run the tool for coarse-grained tasks, as the median task granularity detected was 30000.
+On the other hand, if a task having granularity over 30000 is characterized as coarse-grained, then the user might want to run the tool for coarse-grained tasks, as the median task granularity detected was 34436.
 
 **Note:** more details on the tool and its parameters can be found at characterization/diagnose.py in the documentation section.
 
