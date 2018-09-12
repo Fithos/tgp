@@ -4,16 +4,16 @@ import sys
 import csv
 
 '''
-Filters the context-switches and the CPU csv files, by eliminating the values obtained while GC collection was active
+Filters the context-switches and the CPU csv files, by eliminating the values obtained while GC collection was active.
 
-The output are two files called filtered-cs.csv and filtered-cpu.csv, containing filtered context-switches and CPU measurements values respectevely
+The output are two files called filtered-cs.csv and filtered-cpu.csv, containing filtered context-switches and CPU measurements respectively.
 
 Usage: ./path/to/gc-filtering.py path/to/context-switches.csv path/to/cpu.csv path/to/gc.csv
 
 Parameters:
 -> path/to/context-switches.csv: the csv file containing context-switches data to be filtered
 -> path/to/cpu.csv: the csv file containing CPU data to be filtered
--> path/to/gc.csv: the csv file containing the GC collection data on which the filtering of context-switches and CPU data is based.
+-> path/to/gc.csv: the csv file containing the GC collection data on which the filtering of context-switches and CPU data is based
 Note: files 'path/to/context-switches.csv', 'path/to/cpu.csv', and 'path/to/gc.csv' should be produced by the same tgp analysis.
 '''
 
@@ -38,7 +38,7 @@ cpu_data_array = []
 gc_data_array = []
 
 '''
-A class containing context-switches data from the csv file
+A class containing context-switches data from the csv file.
 '''
 class CSData:
     def __init__(self, timestamp, context_switches):
@@ -46,7 +46,7 @@ class CSData:
         self.context_switches = context_switches
 
 '''
-A class containing CPU data from the csv file
+A class containing CPU data from the csv file.
 '''
 class CPUData:
     def __init__(self, timestamp, user, system):
@@ -55,7 +55,7 @@ class CPUData:
         self.system = system
 
 '''
-A class containing GC data from the csv file
+A class containing GC data from the csv file.
 '''
 class GCData:
     def __init__(self, start_time, end_time):
@@ -63,9 +63,9 @@ class GCData:
         self.end_time = end_time
 
 '''
-Checks whether the input string contains letters
-string: the input string to perform the check on
-Returns true if the string contains letters, false otherwise
+Checks whether the input string contains letters.
+string: the input string to perform the check on.
+Returns true if the string contains letters, false otherwise.
 '''
 def contains_letters(string):
     for s in string:
@@ -75,11 +75,11 @@ def contains_letters(string):
 
 '''
 Reads the input csv file, and sets up the input data structure.
-Depending on the data type, a new instance of CSData, CPUData, or GCData will be created and added to the target array
-input_csv_file: the csv file to read
-target_array: the array where to write the content of the csv file
-data_type: the data which will be read
-file_delimiter: the delimiter used by the file
+Depending on the data type, a new instance of CSData, CPUData, or GCData will be created and added to the target array.
+input_csv_file: the csv file to read.
+target_array: the array where to write the content of the csv file.
+data_type: the data which will be read.
+file_delimiter: the delimiter used by the file.
 '''
 def read_csv(input_csv_file, target_array, data_type, file_delimiter):
     csv_line_counter = 0
@@ -112,7 +112,7 @@ def read_csv(input_csv_file, target_array, data_type, file_delimiter):
 '''
 Filters the context-switches array and writes the valid context-switches data into the filtered array.
 To determine whether a context-switch is valid, said context-switch timestamp is checked against GC start and end timestamps: if the timestamp does not fall in any GC time interval, then the
-context-switch is valid
+context-switch is valid.
 '''
 def filter_cs():
     for cs_data in cs_data_array_bf:
@@ -127,7 +127,7 @@ def filter_cs():
 '''
 Filters the CPU array and writes the valid CPU data into the filtered array.
 To determine whether a CPU measurement is valid, said CPU timestamp is checked against GC start and end timestamps: if the timestamp does not fall in any GC time interval, then the
-CPU measurement is valid
+CPU measurement is valid.
 '''
 def filter_cpu():
     for cpu_data in cpu_data_array_bf:
@@ -140,7 +140,7 @@ def filter_cpu():
             cpu_data_array.append(cpu_data)
 
 '''
-Writes the filtered context-switches array into a new csv file called filtered-cs.csv
+Writes the filtered context-switches array into a new csv file called filtered-cs.csv.
 '''
 def write_cs_csv():
     with open ('filtered-cs.csv', 'w') as csvfile:
@@ -151,7 +151,7 @@ def write_cs_csv():
             writer.writerow({'Timestamp (ns)': cs_data.timestamp, 'Context Switches': cs_data.context_switches})
 
 '''
-Writes the filtered CPU array into a new csv file called filtered-cpu.csv
+Writes the filtered CPU array into a new csv file called filtered-cpu.csv.
 '''
 def write_cpu_csv():
     with open ('filtered-cpu.csv', 'w') as csvfile:
@@ -168,7 +168,6 @@ read_csv(gc_file, gc_data_array, "GC", ',')
 print("")
 print("Number of valid context-switches: %s" % str(len(cs_data_array_bf)))
 print("Number of valid CPU samplings: %s" % str(len(cpu_data_array_bf)))
-
 
 filter_cs()
 

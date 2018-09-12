@@ -19,7 +19,7 @@ The result is a csv file containing the aggregated tasks named 'aggregated-tasks
 Usage: ./path/to/aggregation/program/aggregation.py path/to/csv/tasks.csv
 
 Parameters:
--> path/to/csv/tasks.csv: the csv file containing the tasks data on which to perform aggregation. This file should comply to the format produced by the tgp analysis.
+-> path/to/csv/tasks.csv: the csv file containing the tasks data on which to perform aggregation. This file should comply to the format produced by the tgp analysis
 '''
 
 #The input csv file containing the tasks, specified as the first parameter of the program
@@ -36,12 +36,12 @@ tasks_ids = {}
 
 '''
 Class Task contains all data relative to a task, as in the file tasks.csv.
-The purpose of this class is both to hold data and to provide algorithms used to aggregate tasks
+The purpose of this class is both to hold data and to provide algorithms used to aggregate tasks.
 '''
 class Task:
     '''
-    Initializes the Task class/structure
-    The first 22 parameters just store the same information as in the tasks.csv file
+    Initializes the Task class/structure.
+    The first 22 parameters just store the same information as in the tasks.csv file.
     '''
     def __init__(self, this_id, class_name, outer_id, exec_n, create_t_id, create_t_class, create_t_name, exec_t_id, exec_t_class, exec_t_name, exec_id, exec_class, entry_time, exit_time, gran, is_t, is_r, is_c, is_fjt, is_r_exec, is_c_exec, is_e_exec):
         self.this_id = this_id 
@@ -75,9 +75,9 @@ class Task:
         #Whether the the task has been aggregated, i.e., its granularity has been added to its outer task. If this is false, then the task has no valid outer task and will be written in the aggregated tasks file
         self.aggregated = False
     '''
-    Implements the recursive visit routine of the DFS algorithm
-    In the context, it is used to topologically sort the tasks, i.e, every task comes before its outer task
-    During the visit, the task is appended to the children list of its outer task (if it exists)
+    Implements the recursive visit routine of the DFS algorithm.
+    In the context, it is used to topologically sort the tasks, i.e, every task comes before its outer task.
+    During the visit, the task is appended to the children list of its outer task (if it exists).
     '''
     def visit(self):
         if self.marked == True:
@@ -92,17 +92,17 @@ class Task:
         self.marked = True
         sorted_tasks.insert(0, self)
     '''
-    Applies the aggregation rules, returns true if they hold, false otherwise
-    child: the nested task on which to apply the second part of the rules
+    Applies the aggregation rules, returns true if they hold, false otherwise.
+    child: the nested task on which to apply the second part of the rules.
     '''
     def aggregation_rules(self, child):
         return self.is_t == "F" or (child.is_e_exec == "F" and child.create_t_id == child.exec_t_id)
     '''
-    Performs aggregation for a task by adding the granularities of its children
+    Performs aggregation for a task by adding the granularities of its children.
     If the task has no child, then its granularity is returned.
     If the task has children, then for each one of them aggregation rules are checked. If the rules hold, then the function is recursively called on the child, and the total
     granularity is added to the outer task. Last, the child is marked as aggregated.
-    On the other hand, if the rules do not apply to the child, then said child is skipped for the iteration
+    On the other hand, if the rules do not apply to the child, then said child is skipped for the iteration.
     '''
     def aggregate(self):
         if len(self.children) == 0:
@@ -115,9 +115,9 @@ class Task:
         return self.gran
 
 '''
-Checks whether the input string contains letters
-string: the string on which to check the presence of letters
-Returns true if the string contains letters, false otherwise
+Checks whether the input string contains letters.
+string: the string on which to check the presence of letters.
+Returns true if the string contains letters, false otherwise.
 '''
 def contains_letters(string):
     for s in string:
@@ -127,7 +127,7 @@ def contains_letters(string):
 
 '''
 Reads the tasks.csv file. For each task in the file, as Task object is instantiated and added to the tasks list. The ID of said task is also inserted to the IDs dictionary, pointing to the
-newly created Task instance
+newly created Task instance.
 '''
 def read_csv():
     csv_line_counter = 0
@@ -182,7 +182,7 @@ def read_csv():
             csv_line_counter = csv_line_counter + 1
     
 '''
-Creates and writes the csv file containing the aggregated tasks
+Creates and writes the csv file containing the aggregated tasks.
 '''
 def write_csv():
     with open('aggregated-tasks.csv', 'w') as csvfile:
@@ -238,7 +238,7 @@ def write_csv():
                     })
 
 '''
-Sorts the tasks using DFS
+Sorts the tasks using DFS.
 '''
 def topological_sort():
     for task in tasks:
@@ -246,8 +246,8 @@ def topological_sort():
             task.visit()
 
 '''
-Aggregates the tasks
-The functions starts by the last element of the sorted array, as at the end there are the most 'outer' tasks
+Aggregates the tasks.
+The functions starts by the last element of the sorted array, as at the end there are the most 'outer' tasks.
 '''
 def aggregate():
     index = len(sorted_tasks) - 1

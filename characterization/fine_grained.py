@@ -144,8 +144,8 @@ def sort_tasks():
         value.sort(key=lambda x:x.this_granularity, reverse=True)
 
 '''
-Checks for the input array whether all granularities are within a specified relative range, greater then the number of cores, whether the ratio tasks/class is bigger than the specified ratio
-and whether the number of tasks in the specific class is greater than the specified minimum number of tasks.
+Checks for the input array whether all granularities are within a specified relative range, greater then the number of cores, whether the ratio tasks/class is greater or equal than the overall average
+and whether the number of tasks in the specific class is greater or equal than the specified minimum number of tasks.
 array: the array to perform the check on
 Returns true if the granularities fall within the same relative range, false otherwise.
 '''
@@ -163,8 +163,7 @@ def are_finegrained(array):
     return condition
 
 '''
-For each class, this functions counts the total number of context-switches occurring during the execution of the class's tasks.
-This count only takes place all granularities of tasks inside a class fall within the same relative range.
+For each class, this functions counts the total number of context-switches occurring during the execution of the class's fine-grained tasks.
 '''
 def finegrained_contextswitches():
     for key in classes:
@@ -182,7 +181,7 @@ def finegrained_contextswitches():
             fineclasses[key] = [total_gran, total_cs]
 
 '''
-Writes on a csv file and prints the result on the standard output.
+Writes the result on a csv file as well as printing it on the standard output.
 '''
 def output_results():
     contents = []

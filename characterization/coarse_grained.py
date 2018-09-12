@@ -19,13 +19,13 @@ The result is both printed on the standard output and written to a csv file name
 Usage: ./path/to/coarse_grained.py path/to/tasks.csv path/to/cs.csv path/to/cpu.csv number_of_cores minimum_granularity cores_option
 
 Parameters:
--> path/to/tasks.csv: the csv file containing the tasks on which one would like to check which ones are coarse-grained.
+-> path/to/tasks.csv: the csv file containing the tasks on which one would like to check which ones are coarse-grained
 -> path/to/cs.csv: the csv file containing data on context-switches. This file should be filtered (see gc-filtering.py)
 -> path/to/cpu.csv: the csv file containing data on CPU. This file should be filtered (see gc-filtering.py)
-Note: files 'path/to/tasks.csv', 'path/to/cs.csv', and 'path/to/cpu.csv' should be produced by the same tgp analysis.
+Note: files 'path/to/tasks.csv', 'path/to/cs.csv', and 'path/to/cpu.csv' should be produced by the same tgp analysis
 -> number_of_cores: the number of cores on which the tgp analysis was carried out
--> minimum_granularity: the minimum granularity a task must have to be considered coarse-grained.
--> cores_option: this parameter must be either 'true' or 'false'. If it true, then the number of tasks inside a class must be equal to the number of cores to be considered coarse-grained. If the parameter is set to false, then the number of cores is not taken into account in the analysis.
+-> minimum_granularity: the minimum granularity a task must have to be considered coarse-grained
+-> cores_option: this parameter must be either 'true' or 'false'. If it true, then the number of tasks inside a class must be equal to the number of cores to be considered coarse-grained. If the parameter is set to false, then the number of cores is not taken into account in the analysis
 '''
 
 #The csv file containing tasks data
@@ -65,7 +65,7 @@ class Task:
         self.this_granularity = this_granularity
 
 '''
-A class containing the same data as the csv file for context-switches
+A class containing the same data as the csv file for context-switches.
 '''
 class ContextSwitch:
     def __init__(self, this_time, this_cs):
@@ -83,7 +83,7 @@ class CPU:
 
 '''
 Checks whether the input string contains letters.
-string: the string on which to check the presence of letters
+string: the string on which to check the presence of letters.
 Returns true if the string contains letters, false otherwise.
 '''
 def contains_letters(string):
@@ -164,7 +164,7 @@ def read_cpu():
             cpus.append(CPU(this_time, this_usr, this_sys))
 
 '''
-For each class in the classes dictionary this function counts the number of coarse grained tasks, which are used to set up the dictionary for the coarse-grained classes.
+For each class in the classes dictionary this function counts the number of coarse-grained tasks, which are used to set up the dictionary for the coarse-grained classes.
 '''
 def coarsegrained():
     for key in classes:

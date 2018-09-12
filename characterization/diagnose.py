@@ -4,17 +4,17 @@
 This program performs statistical analysis based on input files containing data on tasks, context-switches, and CPU utilization.
 In particular, the analysis focuses on the average granularity of spawned tasks, their distribution, and their closedness to a specific granularity value. The analysis also computes the average of context-switches (during tasks execution) and CPU utilization (during tasks execution), providing for the latter an interval of confidence of 95%.
 
-The results are both printed on the stardard output and written on a csv file called 'diagnostics.csv'
+The results are both printed on the stardard output and written on a csv file called 'diagnostics.csv'.
 
 Usage: ./path/to/diagnose.py path/to/tasks.csv path/to/cs.csv path/to/cpu.csv specific_class specific_granularity
 
 Parameters:
 -> path/to/tasks.csv: the csv file containing tasks data.
--> path/to/tasks.csv: the csv file containing context-switches data. This file should be a filtered one (see gc-filtering.py).
--> path/to/cpu.csv: the csv file containing CPU utilization data. This file should be a filtered one (see gc-filtering.py).
-Note: files 'path/to/tasks.csv', 'path/to/tasks.csv', and 'path/to/cpu.csv' should be produced by the same analysis.
--> specific_class: a specific class on which to focus the analysis. For example, if 'specific_class' is 'ExampleClass', then all statistics will be referred to tasks belonging to 'ExampleClass', and ignoring the rest. If no specific class is to be focused on, then this value should be set to 'null'.
--> specific_granularity: is used to compute the percentage of tasks whose granularity has the same order of magnitude of 'specific_granularity'. 
+-> path/to/tasks.csv: the csv file containing context-switches data. This file should be a filtered one (see gc-filtering.py)
+-> path/to/cpu.csv: the csv file containing CPU utilization data. This file should be a filtered one (see gc-filtering.py)
+Note: files 'path/to/tasks.csv', 'path/to/tasks.csv', and 'path/to/cpu.csv' should be produced by the same analysis
+-> specific_class: a specific class on which to focus the analysis. For example, if 'specific_class' is 'ExampleClass', then all statistics will be referred to tasks belonging to 'ExampleClass', and ignoring the rest. If no specific class is to be focused on, then this value should be set to 'null'
+-> specific_granularity: is used to compute the percentage of tasks whose granularity has the same order of magnitude of 'specific_granularity'
 '''
 
 from __future__ import division
@@ -33,7 +33,7 @@ specific_class = sys.argv[4]
 #The granularity on which to compute the percentage of tasks having their granularity of the same order of magnitude of said granularity
 gran_centre = long(sys.argv[5])
 
-#The z-score representing a probability of 95%. It is used to compute the confidence interval of the CPU average
+#The z-score corresponding to confidence of 0.95. It is used to compute the confidence interval of the CPU average
 Z_SCORE = 1.96
 
 #An array containing instances of Task objects
@@ -190,7 +190,7 @@ def in_specified_range():
     for task in tasks:
         if abs(math.log(gran_centre, 10) - math.log(task.this_gran, 10)) <= 1:
             count += 1
-    return count 
+    return count
 
 '''
 Computes statistics related to tasks. In particular, this statistics include:
@@ -237,7 +237,7 @@ def tasks_statistics():
    res_dict["Average granularity"] = str(avg)
    res_dict["Median granularity"] = str(median)
    res_dict["IQC"] = str(inter_quartile)
-   res_dict["Whiskers range"] = "[" + str(low_w) + ", " + str(high_w) + "]" 
+   res_dict["Whiskers range"] = "[" + str(low_w) + ", " + str(high_w) + "]"
    res_dict["Percentage of tasks having granularity within whiskers range"] = str(percentage_range) + "%"
    res_dict["Percentage of tasks with granularity around " + str(gran_centre) + ": "] = str(percentage) + "%"
    return res_dict
@@ -312,7 +312,7 @@ def cpu_statistics():
     interval = cpu_confidence_interval()
     print("CPU STATISTICS")
     res = "-> Average CPU utilization: " + str(mean) + "+-" + str(interval)
-    print(res) 
+    print(res)
     print("")
     res_dict = {}
     res_dict["Average CPU utilization"] = str(mean) + "+-" + str(interval)
@@ -335,7 +335,7 @@ def write_stats():
         for key in cpu_stats:
             fieldnames.append(key)
         writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
-        writer.writeheader() 
+        writer.writeheader()
         content = {}
         if specific_class != "null":
             content["Selected class"] = specific_class
