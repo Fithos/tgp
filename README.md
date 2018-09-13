@@ -307,7 +307,14 @@ To perform tasks aggregation on a tasks trace, enter the following command:
 
 `./post-processing/aggregation.py path/to/tasks.csv`
 
-The directory *post-processing/tests-aggregation/* contains several tests for the aggregation tool: documentation on them can be found at *post-processing/tests-aggregation/documentation.txt*. For example, by running the test *post-processing/tests-aggregation/test_valid_chain.csv*, the output should be the following:
+After running the tool, a new csv file named *aggregated-tasks* containing the aggregated tasks will be created.
+
+The directory *post-processing/tests-aggregation/* contains several tests for the aggregation tool: documentation on them can be found at *post-processing/tests-aggregation/documentation.txt*.
+As an example, running the tool with test *test_valid_chain.csv* as following:
+
+`./post-processing/aggregation.py post-processing/tests-aggregation/test_valid_chain.csv`
+
+yields the following result:
 
 ```
 ID,Class,Outer Task ID,Execution N.,Creation thread ID,Creation thread class,Creation thread name,Execution thread ID,Execution thread class,Execution thread name,Executor ID,Executor class,Entry execution time,Exit execution time,Granularity,Is Thread,Is Runnable,Is Callable,Is ForkJoinTask,Is run() executed,Is call() executed,Is exec() executed
@@ -326,7 +333,16 @@ To filter out measurements obtained during GC events, enter the following comman
 
 `./post-processing/gc-filtering.py path/to/context-switches.csv path/to/cpu.csv path/to/gc.csv`
 
-The directory *post-processing/tests-gc-filtering/* contains several test traces for the filtering tool. For example, by running the tool with *cs.csv*, *cpu_in_cs.csv*, and *gc_in_cs.csv*, the output should be the following (the first one contains the filtered context-switches, the second one the filtered CPU utilization):
+After running the tool, two new csv file named *filtered-cs.csv* and *filtered-cpu.csv* will be created, containing the filtered context-switches and CPU utilization measurements respectively.
+
+The directory *post-processing/tests-gc-filtering/* contains several test traces for the filtering tool.
+As an example, running the tool with tests *cs.csv*, *cpu_in_cs.csv*, and *gc_in_cs.csv* as following:
+
+```
+./post-processing/gc-filtering.py post-processing/tests-gc-filtering/cs.csv post-processing/tests-gc-filtering/cpu_in_cs.csv post-processing/tests-gc-filtering/gc_in_cs.csv
+```
+
+yields the following result:
 
 ```
 Timestamp (ns),Context Switches
@@ -369,6 +385,8 @@ To perform diagnostics on tasks, enter the following command:
 ./characterization/diagnose.py path/to/tasks.csv path/to/context-switches.csv path/to/cpu.csv specific_class specific_granularity
 ```
 
+After running the tool, a new csv file named *diagnostics.csv* will be created. The results of the analysis will also be printed on the standard output.
+
 As an example, running the tool as following:
 
 ```
@@ -409,6 +427,8 @@ To run this tool, enter the following command:
 ./path/to/fine_grained.py path/to/tasks.csv path/to/cs.csv number_of_cores maximum_range_between_tasks_granularity_in_same_class greater_than_average minimum_number_tasks_in_same_class maximum_task_granularity
 ```
 
+After running the tool, a new csv file named *fine-grained.csv* will be created. The results of the analysis will also be printed on the standard output.
+
 As an example, running the tool as following:
 
 `./fine_grained.py tests/test-tasks.csv tests/test-cs.csv 0 1000 false 0 10000000`
@@ -431,6 +451,8 @@ To run this tool, enter the following command:
 ```
 ./path/to/coarse_grained.py path/to/tasks.csv path/to/cs.csv path/to/cpu.csv number_of_cores minimum_granularity cores_option
 ```
+
+After running the tool, a new csv file named *coarse-grained.csv* will be created. The results of the analysis will also be printed on the standard output.
 
 As an example, running the tool as following:
 
