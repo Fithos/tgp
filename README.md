@@ -352,7 +352,7 @@ Timestamp (ns),CPU utilization (user),CPU utilization (system)
 
 ### Characterization
 
-Characterization tools are meant to guide the user to distinguish between fine- and coarse-grained tasks: this distinction can be made based on different thresholds, thus allowing the user to customize the analysis.
+Characterization tools are meant to guide the user towards distinguishing between fine- and coarse-grained tasks: this distinction can be made based on different thresholds, thus allowing the user to customize the analysis.
 Characterization tools can be found in the *characterization/* directory.
 
 Directory *characterization/tests/* contains tests for all the following tools.
@@ -366,7 +366,7 @@ This tool provides statistics on task granularity and the average of both the nu
 To perform diagnostics on tasks, enter the following command:
 
 ```
-./characterization/diagnose.py path/to/tasks.csv path/to/context-switches.csv path/to/cpu.csv specific\_class specific\_granularity
+./characterization/diagnose.py path/to/tasks.csv path/to/context-switches.csv path/to/cpu.csv specific_class specific_granularity
 ```
 
 As an example, running the tool as following:
@@ -401,12 +401,12 @@ On the other hand, if a task having granularity over 30000 is characterized as c
 
 #### Fine-grained Tasks
 
-This tool finds classes containing only fine-grained tasks based on user-defined thresholds. The tool then associates to each class the total granulairity (i.e., the sum of the granularities of all its tasks) and the total number of context-switches occurring during its tasks execution.
+This tool finds classes containing only fine-grained tasks based on user-defined thresholds. The tool then associates to each class the total granularity (i.e., the sum of the granularities of all its tasks) and the total number of context-switches occurring during its tasks execution.
 
 To run this tool, enter the following command:
 
 ```
-./path/to/fine\_grained.py path/to/tasks.csv path/to/cs.csv number\_of\_cores maximum\_range\_between\_tasks\_granularity\_in\_same\_class greater\_than\_average minimum\_number\_tasks\_in\_same\_class maximum\_task\_granularity
+./path/to/fine_grained.py path/to/tasks.csv path/to/cs.csv number_of_cores maximum_range_between_tasks_granularity_in_same_class greater_than_average minimum_number_tasks_in_same_class maximum_task_granularity
 ```
 
 As an example, running the tool as following:
@@ -424,7 +424,7 @@ Class: class7 -> Total granularity: 4 -> Number of context-switches: 0
 
 #### Coarse-grained Tasks
 
-This tool finds classes containing only coarse-grained tasks based on user-defined thresholds. The tool then associates to each class the total granualrity, the total number of context-switches and the average CPU utilization (both user and kernel components) occurring during its tasks execution.
+This tool finds classes containing only coarse-grained tasks based on user-defined thresholds. The tool then associates to each class the total granularity, the total number of context-switches and the average CPU utilization (both user and kernel components) occurring during its tasks execution.
 
 To run this tool, enter the following command:
 
