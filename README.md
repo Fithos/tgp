@@ -297,19 +297,21 @@ Post-processing tools can be found in the *post-processing/* directory.
 
 Some tasks may be *nested*, i.e., they fully execute inside the dynamic extent of the execution method of another task, which is called *outer task*. 
 Since the nested and outer tasks cannot execute in parallel, as a general rule nested tasks are aggregated to their outer task, resulting in a single larger task. If the outer task is itself nested, then it is recursively aggregated until a non-nested task is found.
+
 Task aggregation is performed on nested tasks if one of the following conditions is true:
 1. the outer task is not a thread
 2. the outer task is a thread and both the following conditions are true:
     * the nested task has not been submitted
     * the nested task is created and executed by the same thread
 
-To perform tasks aggregation on a tasks trace, enter the following command:
+To perform tasks aggregation on a task trace, enter the following command:
 
 `./post-processing/aggregation.py path/to/tasks.csv`
 
-After running the tool, a new csv file named *aggregated-tasks* containing the aggregated tasks will be created.
+After running the tool, a new csv file named *aggregated-tasks.csv* containing the aggregated tasks will be created.
 
 The directory *post-processing/tests-aggregation/* contains several tests for the aggregation tool: documentation on them can be found at *post-processing/tests-aggregation/documentation.txt*.
+
 As an example, running the tool with test *test_valid_chain.csv* as following:
 
 `./post-processing/aggregation.py post-processing/tests-aggregation/test_valid_chain.csv`
@@ -336,6 +338,7 @@ To filter out measurements obtained during GC events, enter the following comman
 After running the tool, two new csv file named *filtered-cs.csv* and *filtered-cpu.csv* will be created, containing the filtered context-switches and CPU utilization measurements respectively.
 
 The directory *post-processing/tests-gc-filtering/* contains several test traces for the filtering tool.
+
 As an example, running the tool with tests *cs.csv*, *cpu_in_cs.csv*, and *gc_in_cs.csv* as following:
 
 ```
