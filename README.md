@@ -314,7 +314,8 @@ ID,Class,Outer Task ID,Execution N.,Creation thread ID,Creation thread class,Cre
 6,C6,0,1,0,cl,n,1,etc,etn,1,ec,150,155,130,T,F,F,F,F,T,F
 ```
 
-Because in the test trace *test_valid_chain.csv* all outer tasks are either not threads or are threads and both nested tasks are valid, all tasks are aggregated into one single task.
+This test represents a chain of tasks, i.e., one task spawned another task, which in turn spawned another task, and so on. Furthermore, all outer tasks are either not threads or are threads and both nested tasks are valid.
+For example, task with ID 6 is a thread, and its nested task (ID 7) has been created and executed by the same thread and has not been submitted: thus task with ID 6 is a valid outer task. In turn, task with ID 7 is not a thread, which makes it automatically a valid outer task.
 
 **Note:** more details on the tool and its parameters can be found at post-processing/aggregation.py in the documentation section.
 
