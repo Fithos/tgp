@@ -6,7 +6,7 @@ In particular, the analysis focuses on the average granularity of spawned tasks,
 
 The results are both printed on the stardard output and written on a csv file called 'diagnostics.csv'.
 
-Usage: ./path/to/diagnose.py -t <input tasks csv file> --cs <input context-switches csv file> --cpu <input CPU csv file> [--sc <class name> --sg <centre granularity> -o <output csv file name>]
+Usage: ./diagnose.py -t <input tasks csv file> --cs <input context-switches csv file> --cpu <input CPU csv file> [--sc <class name> --sg <centre granularity> -o <output csv file name>]
 
 Parameters:
 -> -t: the csv file containing tasks data.
@@ -31,6 +31,13 @@ DEFAULT_SPECIFIC_CLASS = "null"
 DEFAULT_CENTRE_GRAN = 0
 #The default name of the output file
 DEFAULT_OUT_FILE = "diagnostics.csv"
+
+#Number of rows of tasks file
+ROWS_TASKS = 22
+#Number of rows of the context-switches file
+ROWS_CS = 2
+#Number of rows of the CPU file
+ROWS_CPU = 3
 
 #Flags parser
 parser = OptionParser('usage: -t <input tasks csv file> --cs <input context-switches csv file> --cpu <input CPU csv file> [--sc <class name> --cg <centre granularity> -o <output csv file name>]')
@@ -135,6 +142,9 @@ def read_tasks():
     with open(tasks_file) as csvfile:
         csvreader = csv.reader(csvfile)
         for row in csvreader:
+            if len(row) != ROWS_TASKS:
+                print("Wrong tasks file format")
+                exit(0)
             if linecounter > 0:
                 if contains_letters(row[0]):
                     continue
@@ -171,6 +181,9 @@ def read_cs():
     with open(cs_file) as csvfile:
         csvreader = csv.reader(csvfile)
         for row in csvreader:
+            if len(row) != ROWS_CS:
+                print("Wrong context-switches file format")
+                exit(0)
             if contains_letters(row[0]):
                 continue
             this_time = float(row[0])
@@ -189,6 +202,9 @@ def read_cpu():
     with open(cpu_file) as csvfile:
         csvreader = csv.reader(csvfile)
         for row in csvreader:
+            if len(row) != ROWS_CPU:
+                print("Wrong CPU file format")
+                exit(0)
             if contains_letters(row[0]):
                 continue
             this_time = long(row[0])
@@ -233,7 +249,7 @@ Computes statistics related to tasks. In particular, this statistics include:
 -> the average granularity
 -> the median granualrity
 -> the inter-quartile range
--> the whiskers range
+-> the whiskers range (computed as 'first quartile - 1.5IQC' and 'third quartile + 1.5IQC'
 -> the percentage of tasks having granularity within the whiskers range
 -> the percentage of task falling within the range of the specified granularity
 Returns a dictionary containing these tasks statistics.
@@ -384,6 +400,9 @@ def write_stats():
         for key in cpu_stats:
             content[key] = cpu_stats[key]
         writer.writerow(content)
+
+print("")
+print("Beginning diagnose...")
 
 read_tasks()
 

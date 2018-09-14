@@ -1,5 +1,6 @@
 #!/usr/bin/python
 
+from __future__ import division
 from optparse import OptionParser
 import sys
 import csv
@@ -16,18 +17,18 @@ Tasks within the same class are considered fine-grained if:
 
 The results are both printed via standard output and written to a csv file named 'fine-grained.csv'.
 
-Usage: ./path/to/fine_grained.py -t <input tasks csv file> --cs <input context-switches csv file> [-c <number of cores> --mr <maximum relative granularities range> --ga <greater or equal average> --mt <minimum number of tasks per class> --mg <maximum task granularity> -o <output csv file name>]
+Usage: ./fine_grained.py -t <input tasks csv file> --cs <input context-switches csv file> [-c <number of cores> --mr <maximum relative granularities range> --ga <greater or equal average> --mt <minimum number of tasks per class> --mg <maximum task granularity> -o <output csv file name>]
 
 Parameters:
 -> -t: the csv file containing tasks on which to check whether they are fine grained
 -> --cs: the csv file containing the number of context-switches associated to an analysis. This file should be first filtered (gc-filtering.py)
 Note: parameters 'path/to/tasks.csv' and 'path/to/cs.csv' should be produced by the same analysis.
 Optional parameters:
--> -c: the number of cores used for the analysis (can set to 0 if they should not be accounted). By defualt this number is 0
+-> -c: the number of cores used for the analysis (can set to 0 if they should not be accounted). By default this number is 0
 -> --mr: the maximum difference between granularities of the same class, i.e., if granularities are [1, 3, 4, 6] and the maximum range is 3, then these granularities are not valid, as 1 and 6 differ more than 3. By defualt this number is 100000000
 -> --ga: a condition which states whether the number of tasks in a class should be greater or equal to the overall ratio tasks/class. If this option should be taken into account, then parameter 'greater_than_average' should be set to 'true', 'false' otherwise. By default this option is 'false'
--> --mt: the minimum number of tasks that should be in a class to be considered fine-grained
--> --mg: the maximum granularity a task can have
+-> --mt: the minimum number of tasks that should be in a class to be considered fine-grained. By default this value is 0
+-> --mg: the maximum granularity a task can have. By default this value is 100000000
 -> -o: the name of the csv file containing the results of the analysis. If none is provided, then the output file will be named 'fine-grained.csv'
 '''
 
@@ -43,6 +44,11 @@ DEFAULT_AVERAGE = "false"
 DEFAULT_MIN_TASKS = 0
 #Default maximum granularity
 DEFAULT_MAX_GRAN = 100000000
+
+#Number of rows in the tasks file
+ROWS_TASK = 22
+#Number of rows in the context-switches file
+ROWS_CS = 2
 
 #Flags parser
 parser = OptionParser('usage: -t <input tasks csv file> --cs <input context-switches csv file> [-c <number of cores> -r <maximum relative granularities range> --ga <greater than average> --mt <minimum number of tasks per class> --mg <maximum task granularity> -o <output csv file name>]')
@@ -101,8 +107,12 @@ fineclasses = {}
 
 #The total number of tasks
 total_tasks = 0
+
 #The average number of tasks per class
 average = 0
+
+#The average number of context-switches occurring during the execution of not fine-grained classes' tasks
+avg_cs_not_fine = 0
 
 '''
 A class containing some of the data from the tasks csv file. It contains data relevant to this analysis.
@@ -146,6 +156,9 @@ def read_csv(inputfile, datatype):
         for row in csvreader:
             #Reads tasks
             if datatype == "TASK" and linecounter > 0:
+                if len(row) != ROWS_TASK:
+                    print("Wrong tasks file format")
+                    exit(0)
                 if contains_letters(row[0]):
                     continue
                 task_id = row[0]
@@ -169,6 +182,9 @@ def read_csv(inputfile, datatype):
                     total_tasks += 1
             #Reads context-switches
             elif datatype == "CS" and linecounter > 0:
+                if len(row) != ROWS_CS:
+                    print("Wrong context-switches file format")
+                    exit(0)
                 cs_time = float(row[0])
                 cs_css = float(row[1])
                 contextswitches.append(ContextSwitch(cs_time, cs_css))
@@ -213,6 +229,8 @@ def are_finegrained(array):
 For each class, this functions counts the total number of context-switches occurring during the execution of the class's fine-grained tasks.
 '''
 def finegrained_contextswitches():
+    total_cs_not_grained = 0
+    cs_not_grained = 0
     for key in classes:
         tasks = classes[key]
         #Checks if the conditions for tasks to be considered fine-grained hold
@@ -228,6 +246,15 @@ def finegrained_contextswitches():
                     if cs.this_timestamp >= task.this_entrytime and cs.this_timestamp <= task.this_exittime:
                         total_cs += cs.this_contextswitches
             fineclasses[key] = [total_gran, total_cs, total_num]
+        else:
+            for task in tasks:
+                for cs in contextswitches:
+                    if cs.this_timestamp >= task.this_entrytime and cs.this_timestamp <= task.this_exittime:
+                        cs_not_grained += cs.this_contextswitches
+                        total_cs_not_grained += 1
+    if total_cs_not_grained > 0:   
+        global avg_cs_not_fine                 
+        avg_cs_not_fine = cs_not_grained/total_cs_not_grained
 
 '''
 Writes the result on a csv file as well as printing it on the standard output.
@@ -235,20 +262,31 @@ Writes the result on a csv file as well as printing it on the standard output.
 def output_results():
     contents = []
     print("")
+    print("Average number of context-switches of non-fine-grained classes: %s" % str(avg_cs_not_fine))
+    print("")
     for key in fineclasses:
         content = {}
-        print("Class: %s -> Average granularity: %s -> Average number of context-switches: %s" % (key, str(fineclasses[key][0]/fineclasses[key][2]), str(fineclasses[key][1]/fineclasses[key][2])))
+        avg_gran = fineclasses[key][0]/fineclasses[key][2]
+        avg_cs = fineclasses[key][1]/fineclasses[key][2]
+        increase = 0
+        if avg_cs_not_fine > 0:
+            increase = ((avg_gran - avg_cs_not_fine)/avg_cs_not_fine)*100
+        print("Class: %s -> Average granularity: %s -> Average number of context-switches: %s -> Increase/Decreasing in context-switches compared to non-fine-grained classes: %s" % (key, str(avg_gran), str(avg_cs), str(increase) + "%"))
         content["Class"] = key
-        content["Average granularity"] = str(fineclasses[key][0]/fineclasses[key][2])
-        content["Average number of context-switches"] = str(fineclasses[key][1]/fineclasses[key][2])
+        content["Average granularity"] = str(avg_gran)
+        content["Average number of context-switches"] = str(avg_cs)
+        content["Increase/Decreasing in context-switches compared to non-fine-grained classes"] = str(increase) + "%"
         contents.append(content)
     print("")
     with open(output_file, 'w') as csvfile:
-        fieldnames = ["Class", "Average granularity", "Average number of context-switches"]
+        fieldnames = ["Class", "Average granularity", "Average number of context-switches", "Increase/Decreasing in context-switches compared to non-fine-grained classes"]
         writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
         writer.writeheader()
         for cont in contents:
             writer.writerow(cont)
+
+print("")
+print("Starting analysis...")
 
 read_csv(tasksfile, "TASK")
 read_csv(csfile, "CS")

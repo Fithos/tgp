@@ -9,7 +9,7 @@ Filters the context-switches and the CPU csv files, by eliminating the values ob
 
 The output are two files called filtered-cs.csv and filtered-cpu.csv, containing filtered context-switches and CPU measurements respectively.
 
-Usage: ./path/to/gc-filtering.py --cs <input context-switches csv file> --cpu <input CPU csv file> --gc <input GC csv file> [--outcs <output context-switches csv file name> --outcpu <output CPU csv file name>]
+Usage: ./gc-filtering.py --cs <input context-switches csv file> --cpu <input CPU csv file> --gc <input GC csv file> [--outcs <output context-switches csv file name> --outcpu <output CPU csv file name>]
 
 Parameters:
 -> --cs: the csv file containing context-switches data to be filtered
@@ -25,6 +25,13 @@ Optional parameters:
 DEFAULT_CS_OUT_FILE = "filtered-cs.csv"
 #Default name of the output filtered CPU file
 DEFAULT_CPU_OUT_FILE = "filtered-cpu.csv"
+
+#The number of fields in the context-switches csv file
+ROWS_CS = 2
+#The number of fields in the CPU csv file
+ROWS_CPU = 3
+#The number of fields in the GC csv file
+ROWS_GC = 2
 
 #Flags parser
 parser = OptionParser('usage: -cs <input context-switches csv file> -cpu <input CPU csv file> -gc <input GC csv file> [-outcs <output context-switches csv file name> -outcpu <output CPU csv file name>]')
@@ -124,16 +131,25 @@ def read_csv(input_csv_file, target_array, data_type, file_delimiter):
         for row in csv_reader:
             #Reads and writes context-switches data
             if data_type == "CS" and csv_line_counter > 1:
+                if len(row) != ROWS_CS:
+                    print("Wrong context-switches file format")
+                    exit(0)
                 if row[0][0] != "-" and row[1][0] != "-" and contains_letters(row[0]) == False and contains_letters(row[1]) == False:
                     new_cs = CSData(float(row[0]), float(row[1]))
                     cs_data_array_bf.append(new_cs)
             #Reads and writes CPU data
             elif data_type == "CPU" and csv_line_counter != 0:
+                if len(row) != ROWS_CPU:
+                    print("Wrong CPU file format")
+                    exit(0)
                 if len(row[0]) > 0 and len(row[1]) > 0 and len(row[2]) > 0 and row[0][0] != "-" and row[1][0] != "-" and row[2][0] != "-" and contains_letters(row[0]) == False and contains_letters(row[1]) == False and contains_letters(row[2]) == False:
                     new_cpu = CPUData(long(row[0]), float(row[1]), float(row[2]))
                     cpu_data_array_bf.append(new_cpu)
             #Reads and writes GC data
             elif data_type == "GC":
+                if len(row) != ROWS_GC:
+                    print("Wrong GC file format")
+                    exit(0)
                 if gc_counter == 1:
                     if old_gc[0] != "-" and row[1][0] != "-" and contains_letters(old_gc) == False and contains_letters(row[1]) == False:
                         new_gc = GCData(long(old_gc), long(row[1]))
@@ -200,7 +216,7 @@ read_csv(cpu_file, cpu_data_array, "CPU", ',')
 read_csv(gc_file, gc_data_array, "GC", ',')
 
 print("")
-print("Begin to filter...")
+print("Starting filtering...")
 print("")
 print("Number of context-switches measurements: %s" % str(len(cs_data_array_bf)))
 print("Number of CPU samplings: %s" % str(len(cpu_data_array_bf)))

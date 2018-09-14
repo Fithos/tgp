@@ -306,7 +306,9 @@ Task aggregation is performed on nested tasks if one of the following conditions
 
 To perform tasks aggregation on a task trace, enter the following command:
 
-`./post-processing/aggregation.py path/to/tasks.csv`
+```
+./aggregation.py -t <input tasks csv file> [-o <output csv file name>]
+```
 
 After running the tool, a new csv file named *aggregated-tasks.csv* containing the aggregated tasks will be created.
 
@@ -314,7 +316,9 @@ The directory *post-processing/tests-aggregation/* contains several tests for th
 
 As an example, running the tool with test *test_valid_chain.csv* as following:
 
-`./post-processing/aggregation.py post-processing/tests-aggregation/test_valid_chain.csv`
+```
+./aggregation.py -t tests-aggregation/test_valid_chain.csv
+```
 
 yields the following result:
 
@@ -333,7 +337,9 @@ For example, task with ID 6 is a thread, and its nested task (ID 7) has been cre
 While context-switches and CPU utilization measurements are being taken, it is possible that garbage collection is active: this means that these measurements are perturbed by the GC event, thus not accurately reflecting the application's usage.
 To filter out measurements obtained during GC events, enter the following command:
 
-`./post-processing/gc-filtering.py path/to/context-switches.csv path/to/cpu.csv path/to/gc.csv`
+```
+./gc-filtering.py --cs <input context-switches csv file> --cpu <input CPU csv file> --gc <input GC csv file> [--outcs <output context-switches csv file name> --outcpu <output CPU csv file name>]
+```
 
 After running the tool, two new csv file named *filtered-cs.csv* and *filtered-cpu.csv* will be created, containing the filtered context-switches and CPU utilization measurements respectively.
 
@@ -342,7 +348,7 @@ The directory *post-processing/tests-gc-filtering/* contains several test traces
 As an example, running the tool with tests *cs.csv*, *cpu_in_cs.csv*, and *gc_in_cs.csv* as following:
 
 ```
-./post-processing/gc-filtering.py post-processing/tests-gc-filtering/cs.csv post-processing/tests-gc-filtering/cpu_in_cs.csv post-processing/tests-gc-filtering/gc_in_cs.csv
+./gc-filtering.py --cs tests-gc-filtering/cs.csv --cpu tests-gc-filtering/cpu_in_cs.csv --gc tests-gc-filtering/gc_in_cs.csv
 ```
 
 yields the following result:
@@ -372,6 +378,7 @@ Timestamp (ns),CPU utilization (user),CPU utilization (system)
 ### Characterization
 
 Characterization tools are meant to guide the user towards distinguishing between fine- and coarse-grained tasks: this distinction can be made based on different thresholds, thus allowing the user to customize the analysis.
+It is highlighted these tools only provide general purpose analyses: the user is encouraged to create custom ones.
 Characterization tools can be found in the *characterization/* directory.
 
 Directory *characterization/tests/* contains tests for all the following tools.
@@ -385,7 +392,7 @@ This tool provides statistics on task granularity and the average of both the nu
 To perform diagnostics on tasks, enter the following command:
 
 ```
-./characterization/diagnose.py path/to/tasks.csv path/to/context-switches.csv path/to/cpu.csv specific_class specific_granularity
+./diagnose.py -t <input tasks csv file> --cs <input context-switches csv file> --cpu <input CPU csv file> [--sc <class name> --sg <centre granularity> -o <output csv file name>]
 ```
 
 After running the tool, a new csv file named *diagnostics.csv* will be created. The results of the analysis will also be printed on the standard output.
@@ -393,7 +400,7 @@ After running the tool, a new csv file named *diagnostics.csv* will be created. 
 As an example, running the tool as following:
 
 ```
-./characterization/diagnose.py characterization/test-tasks.csv characterization/test-cs.csv characterization/test-cpu.csv null 100000
+./diagnose.py -t tests/test-tasks.csv --cs tests/test-cs.csv --cpu tests/test-cpu.csv --sg 100000
 ```
 
 yields the following result (stdout):
@@ -422,61 +429,63 @@ On the other hand, if a task having granularity over 30000 is characterized as c
 
 #### Fine-grained Tasks
 
-This tool finds classes containing only fine-grained tasks based on user-defined thresholds. The tool then associates to each class the total granularity (i.e., the sum of the granularities of all its tasks) and the total number of context-switches occurring during its tasks execution.
+This tool finds classes containing only fine-grained tasks based on user-defined thresholds. The tool then associates to each class the average granularity (i.e., the average of the granularities of all its tasks), average number of context-switches occurring during its tasks execution, and the percentage increase/decrease of its number of context-switches compared to the average number of context-switches occurring while non-fine-grained classes' tasks are executing.
 
 To run this tool, enter the following command:
 
 ```
-./path/to/fine_grained.py path/to/tasks.csv path/to/cs.csv number_of_cores maximum_range_between_tasks_granularity_in_same_class greater_than_average minimum_number_tasks_in_same_class maximum_task_granularity
+./fine_grained.py -t <input tasks csv file> --cs <input context-switches csv file> [-c <number of cores> --mr <maximum relative granularities range> --ga <greater or equal average> --mt <minimum number of tasks per class> --mg <maximum task granularity> -o <output csv file name>]
 ```
 
 After running the tool, a new csv file named *fine-grained.csv* will be created. The results of the analysis will also be printed on the standard output.
 
 As an example, running the tool as following:
 
-`./fine_grained.py tests/test-tasks.csv tests/test-cs.csv 0 1000 false 0 10000000`
+```
+./fine_grained.py -t tests/test-tasks.csv --cs tests/test-cs.csv --mr 1000 --mg 10000000
+```
 
 yields the following result (stdout): 
 
 ```
-Class: class6 -> Total granularity: 1443 -> Number of context-switches: 395.0
-Class: class7 -> Total granularity: 4 -> Number of context-switches: 0
+Average number of context-switches of non-fine-grained classes: 138.371428571
+
+Class: class6 -> Average granularity: 1443.0 -> Average number of context-switches: 395.0 -> Increase/Decreasing in context-switches compared to non-fine-grained classes: 942.845343795%
+Class: class7 -> Average granularity: 4.0 -> Average number of context-switches: 0.0 -> Increase/Decreasing in context-switches compared to non-fine-grained classes: -97.1092298162%
 ```
 
 **Note:** more details on the tool and its parameters can be found at characterization/fine\_grained.py in the documentation section.
 
 #### Coarse-grained Tasks
 
-This tool finds classes containing only coarse-grained tasks based on user-defined thresholds. The tool then associates to each class the total granularity, the total number of context-switches and the average CPU utilization (both user and kernel components) occurring during its tasks execution.
+This tool finds classes containing only coarse-grained tasks based on user-defined thresholds. The tool then associates to each class the average granularity, the average number of context-switches and the average CPU utilization (both user and kernel components) occurring during its tasks execution.
 
 To run this tool, enter the following command:
 
 ```
-./path/to/coarse_grained.py path/to/tasks.csv path/to/cs.csv path/to/cpu.csv number_of_cores minimum_granularity cores_option
+./coarse_grained.py -t <input tasks csv file> --cs <input context-switches csv file> --cpu <input CPU csv file>[-c <number of cores> --ming <minimum task granularity> --maxg <maximum task granularity> --co <cores enabling option> -o <output csv file name>]
 ```
 
 After running the tool, a new csv file named *coarse-grained.csv* will be created. The results of the analysis will also be printed on the standard output.
 
 As an example, running the tool as following:
 
-`./coarse_grained.py tests/test-tasks.csv tests/test-cs.csv tests/test-cpu.csv 0 1000 false`
+```
+./coarse_grained.py -t tests/test-tasks.csv --cs tests/test-cs.csv --cpu tests/test-cpu.csv --ming 1000 --maxg 1000000
+```
 
 yields the following result (stdout):
 
 ```
 CLASSES CONTAINING COARSE-GRAINED TASKS:
 -> Class: class6
-   Total granularity: 1443
-   Number of context-switches: 395.0
+   Average granularity: 1443.0
+   Average number of context-switches: 197.5
    Average CPU utilization: 38.2
 -> Class: class5
-   Total granularity: 903914
-   Number of context-switches: 649.0
+   Average granularity: 301304.666667
+   Average number of context-switches: 129.8
    Average CPU utilization: 34.45
--> Class: class3
-   Total granularity: 4170898
-   Number of context-switches: 1296.0
-   Average CPU utilization: 33.4857142857
 ```
 
 **Note:** more details on the tool and its parameters can be found at characterization/coarse\_grained.py in the documentation section.

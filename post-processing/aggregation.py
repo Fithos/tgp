@@ -17,7 +17,7 @@ To perform aggregation, the tasks are modelled as a directed graph, where edges 
 
 The result is a csv file containing the aggregated tasks named 'aggregated-tasks.csv'.
 
-Usage: ./path/to/aggregation/program/aggregation.py -t <input tasks csv file> [-o <output csv file name>]
+Usage: ./aggregation.py -t <input tasks csv file> [-o <output csv file name>]
 
 Parameters:
 -> -t: the csv file containing the tasks data on which to perform aggregation. This file should comply to the format produced by the tgp analysis
@@ -27,6 +27,9 @@ Optional parameters:
 
 #Default name for aggregated tasks
 DEFAULT_OUT_FILE = "aggregated-tasks.csv"
+
+#Length of a row of the csv file containing tasks
+ROW_LEN = 22
 
 #Flags parser
 parser = OptionParser('usage: -t <input tasks csv file> [-o <output csv file name>]')
@@ -158,6 +161,9 @@ def read_csv():
     with open(tasks_file, 'rb') as csvfile:
         csv_reader = csv.reader(csvfile, delimiter=',')
         for row in csv_reader:
+            if len(row) != ROW_LEN:
+                print("Wrong tasks file format")
+                exit(0)
             if csv_line_counter != 0:
                 this_id = row[0]
                 if contains_letters(this_id):
