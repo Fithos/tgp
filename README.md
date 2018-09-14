@@ -463,7 +463,7 @@ This tool finds classes containing only coarse-grained tasks based on user-defin
 To run this tool, enter the following command:
 
 ```
-./coarse_grained.py -t <input tasks csv file> --cs <input context-switches csv file> --cpu <input CPU csv file>[-c <number of cores> --ming <minimum task granularity> --maxg <maximum task granularity> --co <cores enabling option> -o <output csv file name>]
+./coarse_grained.py -t <input tasks csv file> --cs <input context-switches csv file> --cpu <input CPU csv file> [-c <number of cores> --ming <minimum task granularity> --maxg <maximum task granularity> --co <cores enabling option> -o <output csv file name>]
 ```
 
 After running the tool, a new csv file named *coarse-grained.csv* will be created. The results of the analysis will also be printed on the standard output.
