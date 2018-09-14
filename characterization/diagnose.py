@@ -315,7 +315,7 @@ Returns a dictionary containing these context-switches statistics.
 '''
 def cs_statistics():
     print("")
-    print("CONTEXT-SWITCHES STATISTICS")
+    print("CONTEXT SWITCHES STATISTICS")
     total_cs = 0
     for cs in contextswitches:
         total_cs += cs.this_cs

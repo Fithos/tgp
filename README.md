@@ -422,7 +422,7 @@ TASKS STATISTICS
 -> Percentage of tasks having granularity within whiskers range: 79.3103448276%
 -> Percentage of tasks with granularity around 100000: 37.9310344828%
 
-CONTEXT-SWITCHES STATISTICS
+CONTEXT SWITCHES STATISTICS
 -> Average context switches: 141.567567568cs/100ms
 
 CPU STATISTICS
