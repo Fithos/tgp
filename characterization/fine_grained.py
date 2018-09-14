@@ -270,7 +270,9 @@ def output_results():
         avg_cs = fineclasses[key][1]/fineclasses[key][2]
         increase = 0
         if avg_cs_not_fine > 0:
-            increase = ((avg_gran - avg_cs_not_fine)/avg_cs_not_fine)*100
+            increase = avg_gran - avg_cs_not_fine
+            increase /= avg_cs_not_fine
+            increase *= 100
         print("Class: %s -> Average granularity: %s -> Average number of context-switches: %s -> Increase/Decreasing in context-switches compared to non-fine-grained classes: %s" % (key, str(avg_gran), str(avg_cs), str(increase) + "%"))
         content["Class"] = key
         content["Average granularity"] = str(avg_gran)
