@@ -235,17 +235,19 @@ def finegrained_contextswitches():
         tasks = classes[key]
         #Checks if the conditions for tasks to be considered fine-grained hold
         if are_finegrained(tasks):
-            total_num = 0
+            total_num_gran = 0
             total_gran = 0
+            total_num_cs = 0
             total_cs = 0
             for task in tasks:
-                total_num += 1
+                total_num_gran += 1
                 total_gran += task.this_granularity
                 for cs in contextswitches:
                     #Checks whether the context-switch timestamp falls within the task execution
                     if cs.this_timestamp >= task.this_entrytime and cs.this_timestamp <= task.this_exittime:
                         total_cs += cs.this_contextswitches
-            fineclasses[key] = [total_gran, total_cs, total_num]
+                        total_num_cs += 1
+            fineclasses[key] = [total_gran, total_cs, total_num_gran, total_num_cs]
         else:
             for task in tasks:
                 for cs in contextswitches:
@@ -266,13 +268,15 @@ def output_results():
     print("")
     for key in fineclasses:
         content = {}
-        avg_gran = fineclasses[key][0]/fineclasses[key][2]
-        avg_cs = fineclasses[key][1]/fineclasses[key][2]
+        avg_gran = 0
+        avg_cs = 0
+        if fineclasses[key][2] > 0:
+            avg_gran = fineclasses[key][0]/fineclasses[key][2]
+        if fineclasses[key][3] > 0:
+            avg_cs = fineclasses[key][1]/fineclasses[key][3]
         increase = 0
         if avg_cs_not_fine > 0:
-            increase = avg_gran - avg_cs_not_fine
-            increase /= avg_cs_not_fine
-            increase *= 100
+            increase = ((avg_gran - avg_cs_not_fine)/avg_cs_not_fine)*100
         print("Class: %s -> Average granularity: %s -> Average number of context-switches: %s -> Increase/Decreasing in context-switches compared to non-fine-grained classes: %s" % (key, str(avg_gran), str(avg_cs), str(increase) + "%"))
         content["Class"] = key
         content["Average granularity"] = str(avg_gran)
