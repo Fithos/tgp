@@ -378,6 +378,7 @@ Timestamp (ns),CPU utilization (user),CPU utilization (system)
 ### Characterization
 
 Characterization tools are meant to guide the user towards distinguishing between fine- and coarse-grained tasks: this distinction can be made based on different thresholds, thus allowing the user to customize the analysis.
+
 It is highlighted these tools only provide general purpose analyses: the user is encouraged to create custom ones.
 Characterization tools can be found in the *characterization/* directory.
 
