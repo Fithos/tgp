@@ -4,19 +4,19 @@
 This program performs statistical analysis based on input files containing data on tasks, context-switches, and CPU utilization.
 In particular, the analysis focuses on the average granularity of spawned tasks, their distribution, and their closedness to a specific granularity value. The analysis also computes the average of context-switches (during tasks execution) and CPU utilization (during tasks execution), providing for the latter an interval of confidence of 95%.
 
-The results are both printed on the stardard output and written on a csv file called 'diagnostics.csv'.
+The results are both printed on the stardard output and written on a new trace (named 'diagnostics.csv' b default).
 
-Usage: ./diagnose.py -t <input tasks csv file> --cs <input context-switches csv file> --cpu <input CPU csv file> [--sc <class name> --sg <centre granularity> -o <output csv file name>]
+Usage: ./diagnose.py -t <path to tasks trace> --cs <path to context switches trace> --cpu <path to CPU trace> [--sc <class name> --cg <centre granularity> -o <path to results trace>]
 
 Parameters:
--> -t: the csv file containing tasks data.
--> --cs: the csv file containing context-switches data. This file should be a filtered one (see gc-filtering.py)
--> --cpu: the csv file containing CPU utilization data. This file should be a filtered one (see gc-filtering.py)
+-> -t: the csv file containing tasks data
+-> --cs: the csv file containing context-switches data
+-> --cpu: the csv file containing CPU utilization data
 Note: files 'path/to/tasks.csv', 'path/to/tasks.csv', and 'path/to/cpu.csv' should be produced by the same analysis.
 Optional parameters:
 -> --sc: a specific class on which to focus the analysis. For example, if 'specific_class' is 'ExampleClass', then all statistics will be referred to tasks belonging to 'ExampleClass', and ignoring the rest. If no specific class is to be focused on, then this value should be set to 'null'. By default, the tool does not focus on any specific class
 -> --cg: is used to compute the percentage of tasks whose granularity has the same order as the specified one. By default, this granularity is 0
--> -o: the name of the output csv file that will be produced. If none is provided, then the output file will be named 'diagnostics.csv'
+-> -o: the name of the output trace that will be produced. If none is provided, then the output file will be named 'diagnostics.csv'
 '''
 
 from __future__ import division
@@ -41,12 +41,12 @@ ROWS_CPU = 3
 
 #Flags parser
 parser = OptionParser('usage: -t <input tasks csv file> --cs <input context-switches csv file> --cpu <input CPU csv file> [--sc <class name> --cg <centre granularity> -o <output csv file name>]')
-parser.add_option('-t', dest='tasks_file', type='string')
-parser.add_option('--cs', dest='cs_file', type='string')
-parser.add_option('--cpu', dest='cpu_file', type='string')
-parser.add_option('--sc', dest='specific_class', type='string')
-parser.add_option('--cg', dest='gran_centre', type='long')
-parser.add_option('-o', dest='output_file', type='string')
+parser.add_option('-t', dest='tasks_file', type='string', help="the csv file containing tasks data")
+parser.add_option('--cs', dest='cs_file', type='string', help="the csv file containing context-switches data")
+parser.add_option('--cpu', dest='cpu_file', type='string', help="the csv file containing CPU utilization data")
+parser.add_option('--sc', dest='specific_class', type='string', help="a specific class on which to focus the analysis. For example, if 'specific_class' is 'ExampleClass', then all statistics will be referred to tasks belonging to 'ExampleClass', and ignoring th    e rest. If no specific class is to be focused on, then this value should be set to 'null'. By default, the tool does not focus on any specific class")
+parser.add_option('--cg', dest='gran_centre', type='long', help="is used to compute the percentage of tasks whose granularity has the same order as the specified one. By default, this granularity is 0")
+parser.add_option('-o', dest='output_file', type='string', help="the name of the output csv file that will be produced. If none is provided, then the output file will be named 'diagnostics.csv'")
 (options, arguments) = parser.parse_args()
 if (options.tasks_file == None):
     print parser.usage
@@ -93,6 +93,9 @@ grans = []
 
 #The total granularity of all spawned (valid) tasks
 total_grans = 0
+
+#The number of total executed tasks
+exec_tasks = 0
 
 '''
 A class containing some of the data from the csv file for tasks.
@@ -161,6 +164,8 @@ def read_tasks():
                 this_gran = long(row[14])
                 #Checks that task has been executed
                 if this_entry >= 0 and this_exit >= 0:
+                    global exec_tasks
+                    exec_tasks += 1
                     if specific_class != "null":
                         if this_class == specific_class:
                             tasks.append(Task(this_id, this_class, this_entry, this_exit, this_gran))
@@ -273,6 +278,10 @@ def tasks_statistics():
        third_q = int((len(grans) - m_index)/2) + m_index
        first_q = int(m_index/2)
        median = grans[m_index]
+       one_percentile = grans[int(len(grans)*0.01)]
+       five_percentile = grans[int(len(grans)*0.05)]
+       ninetyfive_percentile = grans[int(len(grans)*0.9)]
+       ninetynine_percentile = grans[int(len(grans)*0.95)]
        inter_quartile = grans[third_q] - grans[first_q]
        low_w = grans[first_q] - 1.5 * inter_quartile
        if low_w < 0:
@@ -283,11 +292,16 @@ def tasks_statistics():
        percentage_range = gran_percentage_in_range(low_w, high_w)
        avg = total_grans/len(tasks)
        percentage = (in_specified_range()/len(tasks))*100
-   res = "-> Average granularity: " + str(avg) + " \n-> Median granularity: " + str(median) + " \n-> IQC: " + str(inter_quartile) + " \n-> Whiskers range: [" + str(low_w) + ", " + str(high_w) + "] \n-> Percentage of tasks having granularity within whiskers range: " + str(percentage_range) + "% \n-> Percentage of tasks with granularity around " + str(gran_centre) + ": " + str(percentage) + "%"
+   res = "-> Total number of tasks: " + str(exec_tasks) + " \n-> Average granularity: " + str(avg) + " \n-> One percentile granularity: " + str(one_percentile) + " \n-> Five percentile granularity: " + str(five_percentile) + " \n-> Fifty percentage (median) granularity: " + str(median) + " \n-> Ninety-five percentile granularity: " + str(ninetyfive_percentile) + " \n-> Ninety-nine percentile granularity: " + str(ninetynine_percentile) + " \n-> IQC: " + str(inter_quartile) + " \n-> Whiskers range: [" + str(low_w) + ", " + str(high_w) + "] \n-> Percentage of tasks having granularity within whiskers range: " + str(percentage_range) + "% \n-> Percentage of tasks with granularity around " + str(gran_centre) + ": " + str(percentage) + "%"
    print(res)
    res_dict = {}
+   res_dict["Total number of tasks"] = str(exec_tasks)
    res_dict["Average granularity"] = str(avg)
-   res_dict["Median granularity"] = str(median)
+   res_dict["One percentile granularity"] = str(one_percentile)
+   res_dict["Five percentile granularity"] = str(five_percentile)
+   res_dict["Fifty percentage (median) granularity"] = str(median)
+   res_dict["Ninety-five percentile granularity"] = str(ninetyfive_percentile)
+   res_dict["Ninety-nine percentile granularity"] = str(ninetynine_percentile)
    res_dict["IQC"] = str(inter_quartile)
    res_dict["Whiskers range"] = "[" + str(low_w) + ", " + str(high_w) + "]"
    res_dict["Percentage of tasks having granularity within whiskers range"] = str(percentage_range) + "%"
@@ -308,10 +322,10 @@ def cs_statistics():
     avg = 0
     if len(contextswitches) > 0:
         avg = total_cs/len(contextswitches)
-    res = "-> Average context-switches: " + str(avg) + "cs/100ms"
+    res = "-> Average context switches: " + str(avg) + "cs/100ms"
     print(res)
     res_dict = {}
-    res_dict["Average context-switches"] = str(avg) + "cs/100ms"
+    res_dict["Average context switches"] = str(avg) + "cs/100ms"
     return res_dict
 
 '''

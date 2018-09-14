@@ -7,9 +7,9 @@ import csv
 '''
 Filters the context-switches and the CPU csv files, by eliminating the values obtained while GC collection was active.
 
-The output are two files called filtered-cs.csv and filtered-cpu.csv, containing filtered context-switches and CPU measurements respectively.
+The output are two new traces (named filtered-cs.csv and filtered-cpu.csv by default), containing filtered context-switches and CPU measurements respectively.
 
-Usage: ./gc-filtering.py --cs <input context-switches csv file> --cpu <input CPU csv file> --gc <input GC csv file> [--outcs <output context-switches csv file name> --outcpu <output CPU csv file name>]
+Usage: ./gc-filtering.py --cs <path to context switches trace> --cpu <path to CPU trace> --gc <path to GC trace> [--outcs <path to filtered context switches trace> --outcpu <path to filtered CPU trace>]
 
 Parameters:
 -> --cs: the csv file containing context-switches data to be filtered
@@ -18,7 +18,7 @@ Parameters:
 Note: files 'path/to/context-switches.csv', 'path/to/cpu.csv', and 'path/to/gc.csv' should be produced by the same tgp analysis.
 Optional parameters:
 -> --outcs: the name of the csv file containing the filtered context-switches. If none is provided, then the output file will be named 'filtered-cs.csv'
--> --outcpu: the name of the csv file containing the filtered CPU measurements. If none is provided, then the output file will be named 'filtered-cpu.csv'
+-> --outcpu: the name of the trace containing the filtered CPU measurements. If none is provided, then the output file will be named 'filtered-cpu.csv'
 '''
 
 #Default name of the output filtered context-switches file
@@ -35,11 +35,11 @@ ROWS_GC = 2
 
 #Flags parser
 parser = OptionParser('usage: -cs <input context-switches csv file> -cpu <input CPU csv file> -gc <input GC csv file> [-outcs <output context-switches csv file name> -outcpu <output CPU csv file name>]')
-parser.add_option('--cs', dest='cs_file', type='string')
-parser.add_option('--cpu', dest='cpu_file', type='string')
-parser.add_option('--gc', dest='gc_file', type='string')
-parser.add_option('--outcs', dest='out_cs_file', type='string')
-parser.add_option('--outcpu', dest='out_cpu_file', type='string')
+parser.add_option('--cs', dest='cs_file', type='string', help="the csv file containing context-switches data to be filtered")
+parser.add_option('--cpu', dest='cpu_file', type='string', help="the csv file containing CPU data to be filtered")
+parser.add_option('--gc', dest='gc_file', type='string', help="the csv file containing the GC collection data on which the filtering of context-switches and CPU data is based")
+parser.add_option('--outcs', dest='out_cs_file', type='string', help="the name of the csv file containing the filtered context-switches. If none is provided, then the output file will be named 'filtered-cs.csv'")
+parser.add_option('--outcpu', dest='out_cpu_file', type='string', help="the name of the csv file containing the filtered CPU measurements. If none is provided, then the output file will be named 'filtered-cpu.csv'")
 (options, arguments) = parser.parse_args()
 if (options.cs_file == None):
     print parser.usage
@@ -218,7 +218,7 @@ read_csv(gc_file, gc_data_array, "GC", ',')
 print("")
 print("Starting filtering...")
 print("")
-print("Number of context-switches measurements: %s" % str(len(cs_data_array_bf)))
+print("Number of context switches measurements: %s" % str(len(cs_data_array_bf)))
 print("Number of CPU samplings: %s" % str(len(cpu_data_array_bf)))
 
 filter_cs()
@@ -226,7 +226,7 @@ filter_cs()
 filter_cpu()
 
 print("")
-print("Number of context-switches measurements after filtering: %s" % str(len(cs_data_array)))
+print("Number of context switches measurements after filtering: %s" % str(len(cs_data_array)))
 print("Number of CPU samplings after filtering: %s" % str(len(cpu_data_array)))
 print("")
 print("Filtering successful")

@@ -15,14 +15,14 @@ Task aggregation is performed on nested tasks if one of the following conditions
 
 To perform aggregation, the tasks are modelled as a directed graph, where edges go from nested tasks to their outer one. Topological sorting is then used solve the dependencies.
 
-The result is a csv file containing the aggregated tasks named 'aggregated-tasks.csv'.
+The result is a new trace containing the aggregated tasks (named 'aggregated-tasks.csv' by default).
 
-Usage: ./aggregation.py -t <input tasks csv file> [-o <output csv file name>]
+Usage: ./aggregation.py -t <path to tasks trace> [-o <path to aggregated tasks trace>]
 
 Parameters:
 -> -t: the csv file containing the tasks data on which to perform aggregation. This file should comply to the format produced by the tgp analysis
 Optional parameters:
--> -o: the name of the output csv file that will be produced. If none is provided, then the output file will be named 'aggregated-tasks.csv'
+-> -o: the name of the trace that will be produced. If none is provided, then the output file will be named 'aggregated-tasks.csv'
 '''
 
 #Default name for aggregated tasks
@@ -32,9 +32,9 @@ DEFAULT_OUT_FILE = "aggregated-tasks.csv"
 ROW_LEN = 22
 
 #Flags parser
-parser = OptionParser('usage: -t <input tasks csv file> [-o <output csv file name>]')
-parser.add_option('-t', dest='tasks_file', type='string')
-parser.add_option('-o', dest='output_file', type='string')
+parser = OptionParser('usage: -t <path to tasks trace> [-o <path to aggregated tasks trace>]')
+parser.add_option('-t', dest='tasks_file', type='string', help="the csv file containing the tasks data on which to perform aggregation. This file should comply to the format produced by the tgp analysis")
+parser.add_option('-o', dest='output_file', type='string', help="the name of the output csv file that will be produced. If none is provided, then the output file will be named 'aggregated-tasks.csv'")
 (options, arguments) = parser.parse_args()
 if (options.tasks_file == None):
     print parser.usage
