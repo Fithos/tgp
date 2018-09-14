@@ -32,7 +32,7 @@ Optional parameters:
 '''
 
 #Default name for the output csv file
-DEFAULT_OUT_FILE = "fine-grained.csv"
+DEFAULT_OUT_FILE = "coarse-grained.csv"
 #Default number of cores
 DEFAULT_CORES = 0
 #Default minimum granularity
@@ -101,6 +101,9 @@ classes = {}
 
 #A dictionary associating a class name to an array of Task instances. In this dictionary there are only classes containing only coarse-grained tasks
 coarseclasses = {}
+
+#A dictionary associating a class name to an array of Task instance. This dictionary is used to compute the average number of context-switches occurring during non-coarse-grained classes' tasks execution.
+notcoarseclasses = {}
 
 #An array containing ContextSwitch instances
 contextswitches = []
@@ -241,6 +244,29 @@ def coarsegrained():
                     break
             if all_coarse:
                 coarseclasses[key] = tasks
+            else:
+                notcoarseclasses[key] = tasks
+        else:
+            notcoarseclasses[key] = tasks
+
+'''
+Computes the average number of context-switches occurring during the execution of non-coarse-grained classes' tasks.
+Returns such an average.
+'''
+def non_coarsegrained_avg_cs():
+    total_css = 0
+    total_cs = 0
+    avg_cs = 0
+    for key in notcoarseclasses:
+        tasks = notcoarseclasses[key]
+        for task in tasks:
+            for cs in contextswitches:
+                if cs.this_time >= task.this_entrytime and cs.this_time <= task.this_exittime:
+                    total_cs += cs.this_cs
+                    total_css += 1
+    if total_css > 0:
+        avg_cs = total_cs/total_css
+    return avg_cs
 
 '''
 Computes the analysis for a class. More specifically, for each class this function computes the total granularity, the number of context-switches, and the average CPU utilization.
@@ -280,26 +306,37 @@ Writes to a csv file and prints the results of the analisys on the standard outp
 '''
 def output_results():
     contents = []
+    avg_cs_not_coarse = non_coarsegrained_avg_cs()
+    print("")
+    print("Average number of context-switches of non-coarse-grained classes: %s" % str(avg_cs_not_coarse))
     print("")
     print("CLASSES CONTAINING COARSE-GRAINED TASKS:")
     for key in coarseclasses:
         content = {}
         if (cores_option == "true" and len(coarseclasses[key]) == cores) or (cores_option == "false"):
             res = class_analysis(coarseclasses[key])
-            print("-> Class: %s \n   Average granularity: %s \n   Average number of context-switches: %s \n   Average CPU utilization: %s" % (key, str(res[0]), str(res[1]), str(res[2])))
+            avg_cs_not_coarse = non_coarsegrained_avg_cs()
+            increase = 0
+            if avg_cs_not_coarse > 0:
+                increase = ((res[1] - avg_cs_not_coarse)/avg_cs_not_coarse)*100
+            print("-> Class: %s \n   Average granularity: %s \n   Average number of context-switches: %s \n   Average CPU utilization: %s \n   Increase/Decreasing in context-switches compared to non-coarse-grained classes: %s" % (key, str(res[0]), str(res[1]), str(res[2]), str(increase) + "%"))
             content["Class"] = key
             content["Average granularity"] = str(res[0])
             content["Average number of context-switches"] = str(res[1])
             content["Average CPU utilization"] = str(res[2])
+            content["Increase/Decreasing in context-switches compared to non-coarse-grained classes"] = str(increase)
             contents.append(content)
     print("")
     if cores_option == "true" and is_one_taskers():
         print("CLASSES SPAWNING EXACTLY ONE COARSE-GRAINED TASK AND HAVIN THE SAME NUMBER OF THE NUMBER OF CORES:")
         for key in coarseclasses:
             res = class_analysis(coarseclasses[key])
-            print("-> Class: %s \n   Average granularity: %s \n   Average number of context-switches: %s \n   Average CPU utilization: %s" % (key, str(res[0]), str(res[1]), str(res[2])))
-    with open('coarse-grained.csv', 'w') as csvfile:
-        fieldnames = ["Class", "Average granularity", "Average number of context-switches", "Average CPU utilization"]
+            increase = 0
+            if avg_cs_not_coarse > 0:
+                increase = ((res[1] - avg_cs_not_coarse)/avg_cs_not_coarse)*100
+            print("-> Class: %s \n   Average granularity: %s \n   Average number of context-switches: %s \n   Average CPU utilization: %s \n   Increase/Decreasing in context-switches compared to non-coarse-grained classes: %s" % (key, str(res[0]), str(res[1]), str(res[2]), str(increase)))
+    with open(output_file, 'w') as csvfile:
+        fieldnames = ["Class", "Average granularity", "Average number of context-switches", "Average CPU utilization", "Increase/Decreasing in context-switches compared to non-coarse-grained classes"]
         writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
         writer.writeheader()
         for cont in contents:

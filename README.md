@@ -458,7 +458,7 @@ Class: class7 -> Average granularity: 4.0 -> Average number of context-switches:
 
 #### Coarse-grained Tasks
 
-This tool finds classes containing only coarse-grained tasks based on user-defined thresholds. The tool then associates to each class the average granularity, the average number of context-switches and the average CPU utilization (both user and kernel components) occurring during its tasks execution.
+This tool finds classes containing only coarse-grained tasks based on user-defined thresholds. The tool then associates to each class the average granularity, the average number of context-switches, the average CPU utilization (both user and kernel components), both occurring during its tasks execution, and the increase/decrease of its number of context-switches compared to the average number of context-switches occurring while non-coarse-grained classes' tasks are executing.
 
 To run this tool, enter the following command:
 
@@ -477,15 +477,19 @@ As an example, running the tool as following:
 yields the following result (stdout):
 
 ```
+Average number of context-switches of non-coarse-grained classes: 139.8
+
 CLASSES CONTAINING COARSE-GRAINED TASKS:
 -> Class: class6
    Average granularity: 1443.0
    Average number of context-switches: 197.5
    Average CPU utilization: 38.2
+   Increase/Decreasing in context-switches compared to non-coarse-grained classes: 41.2732474964%
 -> Class: class5
    Average granularity: 301304.666667
    Average number of context-switches: 129.8
    Average CPU utilization: 34.45
+   Increase/Decreasing in context-switches compared to non-coarse-grained classes: -7.1530758226%
 ```
 
 **Note:** more details on the tool and its parameters can be found at characterization/coarse\_grained.py in the documentation section.

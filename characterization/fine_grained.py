@@ -28,7 +28,7 @@ Optional parameters:
 -> --mr: the maximum difference between granularities of the same class, i.e., if granularities are [1, 3, 4, 6] and the maximum range is 3, then these granularities are not valid, as 1 and 6 differ more than 3. By defualt this number is 100000000
 -> --ga: a condition which states whether the number of tasks in a class should be greater or equal to the overall ratio tasks/class. If this option should be taken into account, then parameter 'greater_than_average' should be set to 'true', 'false' otherwise. By default this option is 'false'
 -> --mt: the minimum number of tasks that should be in a class to be considered fine-grained. By default this value is 0
--> --mg: the maximum granularity a task can have. By default this value is 100000000
+-> --mg: the maximum granularity a task can have. By default this value is 100000000 (10^8)
 -> -o: the name of the csv file containing the results of the analysis. If none is provided, then the output file will be named 'fine-grained.csv'
 '''
 
