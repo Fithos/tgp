@@ -1,5 +1,6 @@
 #!/usr/bin/python
 
+from optparse import OptionParser
 import sys
 import csv
 
@@ -8,21 +9,54 @@ Filters the context-switches and the CPU csv files, by eliminating the values ob
 
 The output are two files called filtered-cs.csv and filtered-cpu.csv, containing filtered context-switches and CPU measurements respectively.
 
-Usage: ./path/to/gc-filtering.py path/to/context-switches.csv path/to/cpu.csv path/to/gc.csv
+Usage: ./path/to/gc-filtering.py --cs <input context-switches csv file> --cpu <input CPU csv file> --gc <input GC csv file> [--outcs <output context-switches csv file name> --outcpu <output CPU csv file name>]
 
 Parameters:
--> path/to/context-switches.csv: the csv file containing context-switches data to be filtered
--> path/to/cpu.csv: the csv file containing CPU data to be filtered
--> path/to/gc.csv: the csv file containing the GC collection data on which the filtering of context-switches and CPU data is based
+-> --cs: the csv file containing context-switches data to be filtered
+-> --cpu: the csv file containing CPU data to be filtered
+-> --gc: the csv file containing the GC collection data on which the filtering of context-switches and CPU data is based
 Note: files 'path/to/context-switches.csv', 'path/to/cpu.csv', and 'path/to/gc.csv' should be produced by the same tgp analysis.
+Optional parameters:
+-> --outcs: the name of the csv file containing the filtered context-switches. If none is provided, then the output file will be named 'filtered-cs.csv'
+-> --outcpu: the name of the csv file containing the filtered CPU measurements. If none is provided, then the output file will be named 'filtered-cpu.csv'
 '''
 
-#The file containing context-switches measurements
-cs_file = sys.argv[1]
-#The file containing CPU measurements
-cpu_file = sys.argv[2]
-#The file containing garbage collection's activity records
-gc_file = sys.argv[3]
+#Default name of the output filtered context-switches file
+DEFAULT_CS_OUT_FILE = "filtered-cs.csv"
+#Default name of the output filtered CPU file
+DEFAULT_CPU_OUT_FILE = "filtered-cpu.csv"
+
+#Flags parser
+parser = OptionParser('usage: -cs <input context-switches csv file> -cpu <input CPU csv file> -gc <input GC csv file> [-outcs <output context-switches csv file name> -outcpu <output CPU csv file name>]')
+parser.add_option('--cs', dest='cs_file', type='string')
+parser.add_option('--cpu', dest='cpu_file', type='string')
+parser.add_option('--gc', dest='gc_file', type='string')
+parser.add_option('--outcs', dest='out_cs_file', type='string')
+parser.add_option('--outcpu', dest='out_cpu_file', type='string')
+(options, arguments) = parser.parse_args()
+if (options.cs_file == None):
+    print parser.usage
+    exit(0)
+else:
+    cs_file = options.cs_file
+if (options.cpu_file == None):
+    print parser.usage
+    exit(0)
+else:
+    cpu_file = options.cpu_file
+if (options.gc_file == None):
+    print parser.usage
+    exit(0)
+else:
+    gc_file = options.gc_file
+if (options.out_cs_file == None):
+    out_cs_file = DEFAULT_CS_OUT_FILE
+else:
+    out_cs_file = options.out_cs_file
+if (options.out_cpu_file == None):
+    out_cpu_file = DEFAULT_CPU_OUT_FILE
+else:
+    out_cpu_file = options.out_cpu_file
 
 #The array containing context-switches data before filtering
 cs_data_array_bf = []
@@ -93,7 +127,7 @@ def read_csv(input_csv_file, target_array, data_type, file_delimiter):
                 if row[0][0] != "-" and row[1][0] != "-" and contains_letters(row[0]) == False and contains_letters(row[1]) == False:
                     new_cs = CSData(float(row[0]), float(row[1]))
                     cs_data_array_bf.append(new_cs)
-            #Reads and writes CPU data                  
+            #Reads and writes CPU data
             elif data_type == "CPU" and csv_line_counter != 0:
                 if len(row[0]) > 0 and len(row[1]) > 0 and len(row[2]) > 0 and row[0][0] != "-" and row[1][0] != "-" and row[2][0] != "-" and contains_letters(row[0]) == False and contains_letters(row[1]) == False and contains_letters(row[2]) == False:
                     new_cpu = CPUData(long(row[0]), float(row[1]), float(row[2]))
@@ -136,14 +170,14 @@ def filter_cpu():
             if cpu_data.timestamp >= gc_data.start_time and cpu_data.timestamp <= gc_data.end_time:
                 found = True
                 break
-        if found == False: 
+        if found == False:
             cpu_data_array.append(cpu_data)
 
 '''
 Writes the filtered context-switches array into a new csv file called filtered-cs.csv.
 '''
 def write_cs_csv():
-    with open ('filtered-cs.csv', 'w') as csvfile:
+    with open (out_cs_file, 'w') as csvfile:
         fieldnames = ['Timestamp (ns)', 'Context Switches']
         writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
         writer.writeheader()
@@ -154,28 +188,32 @@ def write_cs_csv():
 Writes the filtered CPU array into a new csv file called filtered-cpu.csv.
 '''
 def write_cpu_csv():
-    with open ('filtered-cpu.csv', 'w') as csvfile:
+    with open (out_cpu_file, 'w') as csvfile:
         fieldnames = ['Timestamp (ns)', 'CPU utilization (user)', 'CPU utilization (system)']
         writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
         writer.writeheader()
         for cpu_data in cpu_data_array:
-            writer.writerow({'Timestamp (ns)': cpu_data.timestamp, 'CPU utilization (user)': cpu_data.user, 'CPU utilization (system)': cpu_data.system})   
-            
+            writer.writerow({'Timestamp (ns)': cpu_data.timestamp, 'CPU utilization (user)': cpu_data.user, 'CPU utilization (system)': cpu_data.system})
+
 read_csv(cs_file, cs_data_array, "CS", ',')
 read_csv(cpu_file, cpu_data_array, "CPU", ',')
 read_csv(gc_file, gc_data_array, "GC", ',')
 
 print("")
-print("Number of valid context-switches: %s" % str(len(cs_data_array_bf)))
-print("Number of valid CPU samplings: %s" % str(len(cpu_data_array_bf)))
+print("Begin to filter...")
+print("")
+print("Number of context-switches measurements: %s" % str(len(cs_data_array_bf)))
+print("Number of CPU samplings: %s" % str(len(cpu_data_array_bf)))
 
 filter_cs()
 
 filter_cpu()
 
 print("")
-print("Number of valid context-switches after filtering: %s" % str(len(cs_data_array)))
-print("Number of valid CPU sampling after filtering: %s" % str(len(cpu_data_array)))
+print("Number of context-switches measurements after filtering: %s" % str(len(cs_data_array)))
+print("Number of CPU samplings after filtering: %s" % str(len(cpu_data_array)))
+print("")
+print("Filtering successful")
 print("")
 
 write_cs_csv()

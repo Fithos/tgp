@@ -1,5 +1,6 @@
 #!/usr/bin/python
 
+from optparse import OptionParser
 import sys
 import csv
 
@@ -15,33 +16,79 @@ Tasks within the same class are considered fine-grained if:
 
 The results are both printed via standard output and written to a csv file named 'fine-grained.csv'.
 
-Usage: ./path/to/fine_grained.py path/to/tasks.csv path/to/cs.csv number_of_cores maximum_range_between_tasks_granularity_in_same_class greater_than_average minimum_number_tasks_in_same_class maximum_task_granularity
+Usage: ./path/to/fine_grained.py -t <input tasks csv file> --cs <input context-switches csv file> [-c <number of cores> --mr <maximum relative granularities range> --ga <greater or equal average> --mt <minimum number of tasks per class> --mg <maximum task granularity> -o <output csv file name>]
 
 Parameters:
--> path/to/tasks.csv: the csv file containing tasks on which to check whether they are fine grained
--> path/to/cs.csv: the csv file containing the number of context-switches associated to an analysis. This file should be first filtered (gc-filtering.py).
+-> -t: the csv file containing tasks on which to check whether they are fine grained
+-> --cs: the csv file containing the number of context-switches associated to an analysis. This file should be first filtered (gc-filtering.py)
 Note: parameters 'path/to/tasks.csv' and 'path/to/cs.csv' should be produced by the same analysis.
--> number_of_cores: the number of cores used for the analysis (can set to 0 if they should not be accounted).
--> maximum_range_between_tasks_granularity_in_same_class: the maximum difference between granularities of the same class, i.e., if granularities are [1, 3, 4, 6] and the maximum range is 3, then these granularities are not valid, as 1 and 6 differ more than 3
--> greater_than_average: a condition which states whether the number of tasks in a class should be greater or equal to the overall ratio tasks/class. If this option should be taken into account, then parameter 'greater_than_average' should be set to 'true', 'false' otherwise
--> minimum_number_tasks_in_same_class: the minimum number of tasks that should be in a class to be considered fine-grained.
--> maximum_task_granularity: the maximum granularity a task can have
+Optional parameters:
+-> -c: the number of cores used for the analysis (can set to 0 if they should not be accounted). By defualt this number is 0
+-> --mr: the maximum difference between granularities of the same class, i.e., if granularities are [1, 3, 4, 6] and the maximum range is 3, then these granularities are not valid, as 1 and 6 differ more than 3. By defualt this number is 100000000
+-> --ga: a condition which states whether the number of tasks in a class should be greater or equal to the overall ratio tasks/class. If this option should be taken into account, then parameter 'greater_than_average' should be set to 'true', 'false' otherwise. By default this option is 'false'
+-> --mt: the minimum number of tasks that should be in a class to be considered fine-grained
+-> --mg: the maximum granularity a task can have
+-> -o: the name of the csv file containing the results of the analysis. If none is provided, then the output file will be named 'fine-grained.csv'
 '''
 
-#The tasks.csv file
-tasksfile = sys.argv[1]
-#The cs.csv file (context-switches)
-csfile = sys.argv[2]
-#The number of cores
-cores_number = int(sys.argv[3])
-#The margin between granularities, i.e., the minimum difference between tasks' granularities belonging to the same class for them to be considered fine-grained
-margin = float(sys.argv[4])
-#An option indicating that the number of tasks in a class must be greater or equal than the average of tasks per class
-average_option = sys.argv[5]
-#The absolute number of tasks per class
-min_tasks_number = float(sys.argv[6])
-#The maximum granularity a task can have
-max_granularity = long(sys.argv[7])
+#Default name for the output csv file
+DEFAULT_OUT_FILE = "fine-grained.csv"
+#Default number of cores
+DEFAULT_CORES = 0
+#Default maximum relative range
+DEFAULT_MAX_RANGE = 100000000
+#Default average option
+DEFAULT_AVERAGE = "false"
+#Default minimum number of tasks
+DEFAULT_MIN_TASKS = 0
+#Default maximum granularity
+DEFAULT_MAX_GRAN = 100000000
+
+#Flags parser
+parser = OptionParser('usage: -t <input tasks csv file> --cs <input context-switches csv file> [-c <number of cores> -r <maximum relative granularities range> --ga <greater than average> --mt <minimum number of tasks per class> --mg <maximum task granularity> -o <output csv file name>]')
+parser.add_option('-t', dest='tasksfile', type='string')
+parser.add_option('--cs', dest='csfile', type='string')
+parser.add_option('-c', dest='cores_number', type='int')
+parser.add_option('--mr', dest='margin', type='float')
+parser.add_option('--ga', dest='average_option', type='string')
+parser.add_option('--mt', dest='min_tasks_number', type='float')
+parser.add_option('--mg', dest='max_granularity', type='long')
+parser.add_option('-o', dest='output_file', type='string')
+(options, arguments) = parser.parse_args()
+if (options.tasksfile == None):
+    print parser.usage
+    exit(0)
+else:
+    tasksfile = options.tasksfile
+if (options.csfile == None):
+    print parser.usage
+    exit(0)
+else:
+    csfile = options.csfile
+if (options.cores_number == None):
+    cores_number = DEFAULT_CORES
+else:
+    cores_number = options.cores_number
+if (options.margin == None):
+    margin = DEFAULT_MAX_RANGE
+else:
+    margin = options.margin
+if (options.average_option == None):
+    average_option = DEFAULT_AVERAGE
+else:
+    average_option = options.average_option
+if (options.min_tasks_number == None):
+    min_tasks_number = DEFAULT_MIN_TASKS
+else:
+    min_tasks_number = options.min_tasks_number
+if (options.max_granularity == None):
+    max_granularity = DEFAULT_MAX_GRAN
+else:
+    max_granularity = options.max_granularity
+if (options.output_file == None):
+    output_file = DEFAULT_OUT_FILE
+else:
+    output_file = options.output_file
 
 #The array containing context-switches data
 contextswitches = []
@@ -170,15 +217,17 @@ def finegrained_contextswitches():
         tasks = classes[key]
         #Checks if the conditions for tasks to be considered fine-grained hold
         if are_finegrained(tasks):
+            total_num = 0
             total_gran = 0
             total_cs = 0
             for task in tasks:
+                total_num += 1
                 total_gran += task.this_granularity
                 for cs in contextswitches:
                     #Checks whether the context-switch timestamp falls within the task execution
                     if cs.this_timestamp >= task.this_entrytime and cs.this_timestamp <= task.this_exittime:
                         total_cs += cs.this_contextswitches
-            fineclasses[key] = [total_gran, total_cs]
+            fineclasses[key] = [total_gran, total_cs, total_num]
 
 '''
 Writes the result on a csv file as well as printing it on the standard output.
@@ -188,14 +237,14 @@ def output_results():
     print("")
     for key in fineclasses:
         content = {}
-        print("Class: %s -> Total granularity: %s -> Number of context-switches: %s" % (key, str(fineclasses[key][0]), str(fineclasses[key][1])))
+        print("Class: %s -> Average granularity: %s -> Average number of context-switches: %s" % (key, str(fineclasses[key][0]/fineclasses[key][2]), str(fineclasses[key][1]/fineclasses[key][2])))
         content["Class"] = key
-        content["Total granularity"] = str(fineclasses[key][0])
-        content["Number of context-switches"] = str(fineclasses[key][1])
+        content["Average granularity"] = str(fineclasses[key][0]/fineclasses[key][2])
+        content["Average number of context-switches"] = str(fineclasses[key][1]/fineclasses[key][2])
         contents.append(content)
     print("")
-    with open('fine-grained.csv', 'w') as csvfile:
-        fieldnames = ["Class", "Total granularity", "Number of context-switches"]
+    with open(output_file, 'w') as csvfile:
+        fieldnames = ["Class", "Average granularity", "Average number of context-switches"]
         writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
         writer.writeheader()
         for cont in contents:

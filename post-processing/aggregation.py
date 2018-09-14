@@ -1,5 +1,6 @@
 #!/usr/bin/python
 
+from optparse import OptionParser
 import sys
 import csv
 
@@ -16,14 +17,31 @@ To perform aggregation, the tasks are modelled as a directed graph, where edges 
 
 The result is a csv file containing the aggregated tasks named 'aggregated-tasks.csv'.
 
-Usage: ./path/to/aggregation/program/aggregation.py path/to/csv/tasks.csv
+Usage: ./path/to/aggregation/program/aggregation.py -t <input tasks csv file> [-o <output csv file name>]
 
 Parameters:
--> path/to/csv/tasks.csv: the csv file containing the tasks data on which to perform aggregation. This file should comply to the format produced by the tgp analysis
+-> -t: the csv file containing the tasks data on which to perform aggregation. This file should comply to the format produced by the tgp analysis
+Optional parameters:
+-> -o: the name of the output csv file that will be produced. If none is provided, then the output file will be named 'aggregated-tasks.csv'
 '''
 
-#The input csv file containing the tasks, specified as the first parameter of the program
-tasks_file = sys.argv[1]
+#Default name for aggregated tasks
+DEFAULT_OUT_FILE = "aggregated-tasks.csv"
+
+#Flags parser
+parser = OptionParser('usage: -t <input tasks csv file> [-o <output csv file name>]')
+parser.add_option('-t', dest='tasks_file', type='string')
+parser.add_option('-o', dest='output_file', type='string')
+(options, arguments) = parser.parse_args()
+if (options.tasks_file == None):
+    print parser.usage
+    exit(0)
+else:
+    tasks_file = options.tasks_file
+if (options.output_file == None):
+    output_file = DEFAULT_OUT_FILE
+else:
+    output_file = options.output_file
 
 #An array containing all tasks
 tasks = []
@@ -33,6 +51,12 @@ sorted_tasks = []
 
 #A dictionary associating an ID with the correspoding task object
 tasks_ids = {}
+
+#The number of (executed) tasks
+total_tasks = 0
+
+#The number of valid outer tasks
+valid_outer_tasks = 0
 
 '''
 Class Task contains all data relative to a task, as in the file tasks.csv.
@@ -44,7 +68,7 @@ class Task:
     The first 22 parameters just store the same information as in the tasks.csv file.
     '''
     def __init__(self, this_id, class_name, outer_id, exec_n, create_t_id, create_t_class, create_t_name, exec_t_id, exec_t_class, exec_t_name, exec_id, exec_class, entry_time, exit_time, gran, is_t, is_r, is_c, is_fjt, is_r_exec, is_c_exec, is_e_exec):
-        self.this_id = this_id 
+        self.this_id = this_id
         self.class_name = class_name
         self.outer_id = outer_id
         self.exec_n = exec_n
@@ -179,13 +203,15 @@ def read_csv():
                     new_task = Task(this_id, class_name, outer_id, exec_n, create_t_id, create_t_class, create_t_name, exec_t_id, exec_t_class, exec_t_name, exec_id, exec_class, entry_time, exit_time, gran, is_t, is_r, is_c, is_fjt, is_r_exec, is_c_exec, is_e_exec)
                     tasks.append(new_task)
                     tasks_ids[this_id] = new_task
+                    global total_tasks
+                    total_tasks += 1
             csv_line_counter = csv_line_counter + 1
-    
+
 '''
 Creates and writes the csv file containing the aggregated tasks.
 '''
 def write_csv():
-    with open('aggregated-tasks.csv', 'w') as csvfile:
+    with open(output_file, 'w') as csvfile:
         fieldnames = ['ID',
                       'Class',
                       'Outer Task ID',
@@ -236,6 +262,8 @@ def write_csv():
                         'Is call() executed': s_task.is_c_exec,
                         'Is exec() executed': s_task.is_e_exec
                     })
+                global valid_outer_tasks
+                valid_outer_tasks += 1
 
 '''
 Sorts the tasks using DFS.
@@ -256,6 +284,10 @@ def aggregate():
             sorted_tasks[index].aggregate()
         index = index - 1
 
+print("")
+
+print("Starting aggregation...")
+
 read_csv()
 
 topological_sort()
@@ -263,3 +295,11 @@ topological_sort()
 aggregate()
 
 write_csv()
+
+print("")
+print("%s tasks out of %s have been aggregated" % (str((total_tasks - valid_outer_tasks)), str(total_tasks)))
+print("")
+
+print("Aggregation completed")
+
+print("")

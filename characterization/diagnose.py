@@ -6,32 +6,68 @@ In particular, the analysis focuses on the average granularity of spawned tasks,
 
 The results are both printed on the stardard output and written on a csv file called 'diagnostics.csv'.
 
-Usage: ./path/to/diagnose.py path/to/tasks.csv path/to/cs.csv path/to/cpu.csv specific_class specific_granularity
+Usage: ./path/to/diagnose.py -t <input tasks csv file> --cs <input context-switches csv file> --cpu <input CPU csv file> [--sc <class name> --sg <centre granularity> -o <output csv file name>]
 
 Parameters:
--> path/to/tasks.csv: the csv file containing tasks data.
--> path/to/tasks.csv: the csv file containing context-switches data. This file should be a filtered one (see gc-filtering.py)
--> path/to/cpu.csv: the csv file containing CPU utilization data. This file should be a filtered one (see gc-filtering.py)
-Note: files 'path/to/tasks.csv', 'path/to/tasks.csv', and 'path/to/cpu.csv' should be produced by the same analysis
--> specific_class: a specific class on which to focus the analysis. For example, if 'specific_class' is 'ExampleClass', then all statistics will be referred to tasks belonging to 'ExampleClass', and ignoring the rest. If no specific class is to be focused on, then this value should be set to 'null'
--> specific_granularity: is used to compute the percentage of tasks whose granularity has the same order of magnitude of 'specific_granularity'
+-> -t: the csv file containing tasks data.
+-> --cs: the csv file containing context-switches data. This file should be a filtered one (see gc-filtering.py)
+-> --cpu: the csv file containing CPU utilization data. This file should be a filtered one (see gc-filtering.py)
+Note: files 'path/to/tasks.csv', 'path/to/tasks.csv', and 'path/to/cpu.csv' should be produced by the same analysis.
+Optional parameters:
+-> --sc: a specific class on which to focus the analysis. For example, if 'specific_class' is 'ExampleClass', then all statistics will be referred to tasks belonging to 'ExampleClass', and ignoring the rest. If no specific class is to be focused on, then this value should be set to 'null'. By default, the tool does not focus on any specific class
+-> --cg: is used to compute the percentage of tasks whose granularity has the same order as the specified one. By default, this granularity is 0
+-> -o: the name of the output csv file that will be produced. If none is provided, then the output file will be named 'diagnostics.csv'
 '''
 
 from __future__ import division
+from optparse import OptionParser
 import sys
 import csv
 import math
 
-#The csv file containing tasks data
-tasks_file = sys.argv[1]
-#The csv file containing context-switches data
-cs_file = sys.argv[2]
-#The csv file containing CPU data
-cpu_file = sys.argv[3]
-#The class on which to focus the analysis
-specific_class = sys.argv[4]
-#The granularity on which to compute the percentage of tasks having their granularity of the same order of magnitude of said granularity
-gran_centre = long(sys.argv[5])
+#By default, the analysis does not focus on any class.
+DEFAULT_SPECIFIC_CLASS = "null"
+#Default centre granularity
+DEFAULT_CENTRE_GRAN = 0
+#The default name of the output file
+DEFAULT_OUT_FILE = "diagnostics.csv"
+
+#Flags parser
+parser = OptionParser('usage: -t <input tasks csv file> --cs <input context-switches csv file> --cpu <input CPU csv file> [--sc <class name> --cg <centre granularity> -o <output csv file name>]')
+parser.add_option('-t', dest='tasks_file', type='string')
+parser.add_option('--cs', dest='cs_file', type='string')
+parser.add_option('--cpu', dest='cpu_file', type='string')
+parser.add_option('--sc', dest='specific_class', type='string')
+parser.add_option('--cg', dest='gran_centre', type='long')
+parser.add_option('-o', dest='output_file', type='string')
+(options, arguments) = parser.parse_args()
+if (options.tasks_file == None):
+    print parser.usage
+    exit(0)
+else:
+    tasks_file = options.tasks_file
+if (options.cs_file == None):
+    print parser.usage
+    exit(0)
+else:
+    cs_file = options.cs_file
+if (options.cpu_file == None):
+    print parser.usage
+    exit(0)
+else:
+    cpu_file = options.cpu_file
+if (options.specific_class == None):
+    specific_class = DEFAULT_SPECIFIC_CLASS
+else:
+    specific_class = options.specific_class
+if (options.gran_centre == None):
+    gran_centre = DEFAULT_CENTRE_GRAN
+else:
+    gran_centre = options.gran_centre
+if (options.output_file == None):
+    output_file = DEFAULT_OUT_FILE
+else:
+    output_file = options.output_file
 
 #The z-score corresponding to confidence of 0.95. It is used to compute the confidence interval of the CPU average
 Z_SCORE = 1.96
@@ -188,7 +224,7 @@ Returns the number of tasks satifying said property.
 def in_specified_range():
     count = 0
     for task in tasks:
-        if abs(math.log(gran_centre, 10) - math.log(task.this_gran, 10)) <= 1:
+        if gran_centre > 0 and (abs(math.log(gran_centre, 10) - math.log(task.this_gran, 10)) <= 1):
             count += 1
     return count
 
@@ -325,7 +361,7 @@ def write_stats():
     tasks_stats = tasks_statistics()
     cs_stats = cs_statistics()
     cpu_stats = cpu_statistics()
-    with open('diagnositcs.csv', 'w') as csvfile:
+    with open(output_file, 'w') as csvfile:
         fieldnames = []
         fieldnames.append("Selected class")
         for key in tasks_stats:
