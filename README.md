@@ -450,8 +450,8 @@ yields the following result (stdout):
 ```
 Average number of context-switches of non-fine-grained classes: 138.371428571
 
-Class: class6 -> Average granularity: 1443.0 -> Average number of context-switches: 197.5 -> Increase/Decreasing in context-switches compared to non-fine-grained classes: 942.845343795%
-Class: class7 -> Average granularity: 4.0 -> Average number of context-switches: 0 -> Increase/Decreasing in context-switches compared to non-fine-grained classes: -97.1092298162%
+Class: class6 -> Average granularity: 1443.0 -> Average number of context-switches: 197.5 -> Increase/Decreasing in context-switches compared to non-fine-grained classes: 42.7317778237%
+Class: class7 -> Average granularity: 4.0 -> Average number of context-switches: 0 -> Increase/Decreasing in context-switches compared to non-fine-grained classes: -100.0%
 ```
 
 **Note:** more details on the tool and its parameters can be found at characterization/fine\_grained.py in the documentation section.
