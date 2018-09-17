@@ -19,15 +19,15 @@ The results are both printed via standard output and written to a new trace (nam
 Usage: ./fine_grained.py -t <path to tasks trace> --cs <path to context switches trace> [--Mr <maximum relative granularities range> --ga <greater or equal average> --mt <minimum number of tasks per class> --Mg <maximum task granularity> -o <path to results trace>]
 
 Parameters:
--> -t: the csv file containing tasks on which to check whether they are fine grained
--> --cs: the csv file containing the number of context-switches associated to an analysis
-Note: parameters 'path/to/tasks.csv' and 'path/to/cs.csv' should be produced by the same analysis.
+-> -t: the task trace on which to check whether they are fine grained
+-> --cs: the context switches trace associated to an analysis
+Note: parameters 'path/to/task trace' and 'path/to/context switches trace' should be produced by the profiling run.
 Optional parameters:
 -> --Mr: the maximum difference between granularities of the same class, i.e., if granularities are [1, 3, 4, 6] and the maximum range is 3, then these granularities are not valid, as 1 and 6 differ more than 3. By defualt this number is 100000000
 -> --ga: a condition which states whether the number of tasks in a class should be greater or equal to the overall ratio tasks/class. If this option should be taken into account, then parameter 'greater_than_average' should be set to 'true', 'false' otherwise. By default this option is 'false'
 -> --mt: the minimum number of tasks that should be in a class to be considered fine-grained. By default this value is 0
 -> --Mg: the maximum granularity a task can have. By default this value is 100000000 (10^8)
--> -o: the name of the trace containing the results of the analysis. If none is provided, then the output file will be named 'fine-grained.csv'
+-> -o: the name of the trace containing the results of the analysis. If none is provided, then the output trace will be named 'fine-grained.csv'
 '''
 
 #Default name for the output csv file
@@ -41,51 +41,10 @@ DEFAULT_MIN_TASKS = 0
 #Default maximum granularity
 DEFAULT_MAX_GRAN = 100000000
 
-#Number of rows in the tasks file
-ROWS_TASK = 22
-#Number of rows in the context-switches file
-ROWS_CS = 2
-
-#Flags parser
-parser = OptionParser('usage: -t <input tasks csv file> --cs <input context-switches csv file> [--Mr <maximum relative granularities range> --ga <greater than average> --mt <minimum number of tasks per class> --Mg <maximum task granularity> -o <output csv file name>]')
-parser.add_option('-t', dest='tasksfile', type='string', help="the csv file containing tasks on which to check whether they are fine grained")
-parser.add_option('--cs', dest='csfile', type='string', help="the csv file containing the number of context-switches associated to an analysis")
-parser.add_option('--Mr', dest='margin', type='float', help="the maximum difference between granularities of the same class, i.e., if granularities are [1, 3, 4, 6] and the maximum range is 3, then these granularities are not valid, as 1 and 6 differ more than 3. By defualt this number is 100000000")
-parser.add_option('--ga', dest='average_option', type='string', help="a condition which states whether the number of tasks in a class should be greater or equal to the overall ratio tasks/class. If this option should be taken into account, then parameter 'greater_than_average' should be set to 'true', 'false' otherwise. By default this option is 'false'")
-parser.add_option('--mt', dest='min_tasks_number', type='float', help="the minimum number of tasks that should be in a class to be considered fine-grained. By default this value is 0")
-parser.add_option('--Mg', dest='max_granularity', type='long', help="the maximum granularity a task can have. By default this value is 100000000 (10^8)")
-parser.add_option('-o', dest='output_file', type='string', help="the name of the csv file containing the results of the analysis. If none is provided, then the output file will be named 'fine-grained.csv'")
-(options, arguments) = parser.parse_args()
-if (options.tasksfile == None):
-    print parser.usage
-    exit(0)
-else:
-    tasksfile = options.tasksfile
-if (options.csfile == None):
-    print parser.usage
-    exit(0)
-else:
-    csfile = options.csfile
-if (options.margin == None):
-    margin = DEFAULT_MAX_RANGE
-else:
-    margin = options.margin
-if (options.average_option == None):
-    average_option = DEFAULT_AVERAGE
-else:
-    average_option = options.average_option
-if (options.min_tasks_number == None):
-    min_tasks_number = DEFAULT_MIN_TASKS
-else:
-    min_tasks_number = options.min_tasks_number
-if (options.max_granularity == None):
-    max_granularity = DEFAULT_MAX_GRAN
-else:
-    max_granularity = options.max_granularity
-if (options.output_file == None):
-    output_file = DEFAULT_OUT_FILE
-else:
-    output_file = options.output_file
+#Number of fields in the tasks file
+FIELDS_TASK = 22
+#Number of fields in the context-switches file
+FIELDS_CS = 2
 
 #The array containing context-switches data
 contextswitches = []
@@ -102,10 +61,10 @@ total_tasks = 0
 #The average number of tasks per class
 average = 0
 
-'''
-A class containing some of the data from the tasks csv file. It contains data relevant to this analysis.
-'''
 class Task:
+    '''
+    A class containing some of the data from the tasks csv file. It contains data relevant to this analysis.
+    '''
     def __init__(self, this_id, this_class, this_entrytime, this_exittime, this_granularity):
         self.this_id = this_id
         self.this_class = this_class
@@ -113,39 +72,39 @@ class Task:
         self.this_exittime = this_exittime
         self.this_granularity = this_granularity
 
-'''
-A class containing data from the context-switches csv file.
-'''
 class ContextSwitch:
+    '''
+    A class containing data from the context-switches csv file.
+    '''
     def __init__(self, this_timestamp, this_contextswitches):
         self.this_timestamp = this_timestamp
         self.this_contextswitches = this_contextswitches
 
-'''
-Checks whether the input string contains letters.
-string: the string on which to check the presence of letters
-Returns true if the string contains letters, false otherwise.
-'''
 def contains_letters(string):
+    '''
+    Checks whether the input string contains letters.
+    string: the string on which to check the presence of letters
+    Returns true if the string contains letters, false otherwise.
+    '''
     for s in string:
         if s.isalpha():
             return True
     return False
 
-'''
-Reads the input csv file and based on the input data type it initializes the right data structures.
-inputfile: the csv file to read
-datatype: the type of the data to read.
-'''
 def read_csv(inputfile, datatype):
+    '''
+    Reads the input csv file and based on the input data type it initializes the right data structures.
+    inputfile: the csv file to read
+    datatype: the type of the data to read.
+    '''
     linecounter = 0
     with open (inputfile) as csvfile:
         csvreader = csv.reader(csvfile, delimiter=',')
         for row in csvreader:
             #Reads tasks
             if datatype == "TASK" and linecounter > 0:
-                if len(row) != ROWS_TASK:
-                    print("Wrong tasks file format")
+                if len(row) != FIELDS_TASK:
+                    print("Wrong task trace format")
                     exit(0)
                 if contains_letters(row[0]):
                     continue
@@ -170,37 +129,37 @@ def read_csv(inputfile, datatype):
                     total_tasks += 1
             #Reads context-switches
             elif datatype == "CS" and linecounter > 0:
-                if len(row) != ROWS_CS:
-                    print("Wrong context-switches file format")
+                if len(row) != FIELDS_CS:
+                    print("Wrong context switches trace format")
                     exit(0)
                 cs_time = float(row[0])
                 cs_css = float(row[1])
                 contextswitches.append(ContextSwitch(cs_time, cs_css))
             linecounter += 1
 
-'''
-Computes the average of valid and executed tasks per class.
-'''
 def compute_average():
+    '''
+    Computes the average of valid and executed tasks per class.
+    '''
     if len(classes) > 0:
         global average
         average = total_tasks/len(classes)
 
-'''
-Sorts in place each entry of the classes dictionary based on the granularity.
-This is done so that checking the granularities' range is faster.
-'''
 def sort_tasks():
+    '''
+    Sorts in place each entry of the classes dictionary based on the granularity.
+    This is done so that checking the granularities' range is faster.
+    '''
     for key, value in classes.iteritems():
         value.sort(key=lambda x:x.this_granularity, reverse=True)
 
-'''
-Checks for the input array whether all granularities are within a specified relative range, greater then the number of cores, whether the ratio tasks/class is greater or equal than the overall average
-and whether the number of tasks in the specific class is greater or equal than the specified minimum number of tasks.
-array: the array to perform the check on
-Returns true if the granularities fall within the same relative range, false otherwise.
-'''
 def are_finegrained(array):
+    '''
+    Checks for the input array whether all granularities are within a specified relative range, greater then the number of cores, whether the ratio tasks/class is greater or equal than the overall average
+    and whether the number of tasks in the specific class is greater or equal than the specified minimum number of tasks.
+    array: the array to perform the check on
+    Returns true if the granularities fall within the same relative range, false otherwise.
+    '''
     all_grans_min = True
     for arr in array:
         if arr.this_granularity > max_granularity:
@@ -213,10 +172,10 @@ def are_finegrained(array):
         condition = condition and len(array) >= average
     return condition
 
-'''
-For each class, this functions counts the total number of context-switches occurring during the execution of the class's fine-grained tasks.
-'''
 def finegrained_contextswitches():
+    '''
+    For each class, this functions counts the total number of context-switches occurring during the execution of the class's fine-grained tasks.
+    '''
     for key in classes:
         tasks = classes[key]
         #Checks if the conditions for tasks to be considered fine-grained hold
@@ -235,11 +194,11 @@ def finegrained_contextswitches():
                         total_num_cs += 1
             fineclasses[key] = [total_gran, total_cs, total_num_gran, total_num_cs]
 
-'''
-Computes the average of context switches occurring outside fine-grained tasks execution.
-Return such an average.
-'''
 def context_switches_not_in_finegrained():
+    '''
+    Computes the average of context switches occurring outside fine-grained tasks execution.
+    Return such an average.
+    '''
     cs_num = 0
     cs_total = 0
     avg_cs = 0
@@ -247,12 +206,12 @@ def context_switches_not_in_finegrained():
         is_outside = True
         for key in fineclasses:
             tasks = classes[key]
+            if is_outside == False:
+                break
             for task in tasks:
                 if cs.this_timestamp >= task.this_entrytime and cs.this_timestamp <= task.this_exittime:
                     is_outside = False
                     break
-            if is_outside == False:
-                break
         if is_outside == True:
             cs_num += 1
             cs_total += cs.this_contextswitches
@@ -260,10 +219,10 @@ def context_switches_not_in_finegrained():
         avg_cs = cs_total/cs_num
     return avg_cs
 
-'''
-Writes the result on a csv file as well as printing it on the standard output.
-'''
 def output_results():
+    '''
+    Writes the result on a csv file as well as printing it on the standard output.
+    '''
     contents = []
     avg_cs_out = context_switches_not_in_finegrained()
     print("")
@@ -290,14 +249,56 @@ def output_results():
         for cont in contents:
             writer.writerow(cont)
 
-print("")
-print("Starting analysis...")
+if __name__ == "__main__":
+    #Flags parser
+    parser = OptionParser('usage: -t <path to tasks trace> --cs <path to context switches trace> [--Mr <maximum relative granularities range> --ga <greater than average> --mt <minimum number of tasks per class> --Mg <maximum task granularity> -o <path to results trace>]')
+    parser.add_option('-t', dest='tasksfile', type='string', help="the task trace on which to check whether they are fine grained")
+    parser.add_option('--cs', dest='csfile', type='string', help="the context switches trace associated to an analysis")
+    parser.add_option('--Mr', dest='margin', type='float', help="the maximum difference between granularities of the same class, i.e., if granularities are [1, 3, 4, 6] and the maximum range is 3, then these granularities are not valid, as 1 and 6 differ more than 3. By defualt this number is 100000000")
+    parser.add_option('--ga', dest='average_option', type='string', help="a condition which states whether the number of tasks in a class should be greater or equal to the overall ratio tasks/class. If this option should be taken into account, then parameter 'greater_than_average' should be set to 'true', 'false' otherwise. By default this option is 'false'")
+    parser.add_option('--mt', dest='min_tasks_number', type='float', help="the minimum number of tasks that should be in a class to be considered fine-grained. By default this value is 0")
+    parser.add_option('--Mg', dest='max_granularity', type='long', help="the maximum granularity a task can have. By default this value is 100000000 (10^8)")
+    parser.add_option('-o', dest='output_file', type='string', help="the name of the trace containing the results of the analysis. If none is provided, then the output trace will be named 'fine-grained.csv'")
+    (options, arguments) = parser.parse_args()
+    if (options.tasksfile is None):
+        print(parser.usage)
+        exit(0)
+    else:
+        tasksfile = options.tasksfile
+    if (options.csfile is None):
+        print(parser.usage)
+        exit(0)
+    else:
+        csfile = options.csfile
+    if (options.margin is None):
+        margin = DEFAULT_MAX_RANGE
+    else:
+        margin = options.margin
+    if (options.average_option is None):
+        average_option = DEFAULT_AVERAGE
+    else:
+        average_option = options.average_option
+    if (options.min_tasks_number is None):
+        min_tasks_number = DEFAULT_MIN_TASKS
+    else:
+        min_tasks_number = options.min_tasks_number
+    if (options.max_granularity is None):
+        max_granularity = DEFAULT_MAX_GRAN
+    else:
+        max_granularity = options.max_granularity
+    if (options.output_file is None):
+        output_file = DEFAULT_OUT_FILE
+    else:
+        output_file = options.output_file
 
-read_csv(tasksfile, "TASK")
-read_csv(csfile, "CS")
+    print("")
+    print("Starting analysis...")
 
-sort_tasks()
+    read_csv(tasksfile, "TASK")
+    read_csv(csfile, "CS")
 
-finegrained_contextswitches()
+    sort_tasks()
 
-output_results()
+    finegrained_contextswitches()
+
+    output_results()

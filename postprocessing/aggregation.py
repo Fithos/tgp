@@ -17,10 +17,10 @@ To perform aggregation, the tasks are modelled as a directed graph, where edges 
 
 The result is a new trace containing the aggregated tasks (named 'aggregated-tasks.csv' by default).
 
-Usage: ./aggregation.py -t <path to tasks trace> [-o <path to aggregated tasks trace>]
+Usage: ./aggregation.py -t <path to task trace> [-o <path to aggregated task trace>]
 
 Parameters:
--> -t: the csv file containing the tasks data on which to perform aggregation. This file should comply to the format produced by the tgp analysis
+-> -t: the task trace on which to perform aggregation. This file should comply to the format produced by the tgp analysis
 Optional parameters:
 -> -o: the name of the trace that will be produced. If none is provided, then the output file will be named 'aggregated-tasks.csv'
 '''
@@ -28,23 +28,8 @@ Optional parameters:
 #Default name for aggregated tasks
 DEFAULT_OUT_FILE = "aggregated-tasks.csv"
 
-#Length of a row of the csv file containing tasks
-ROW_LEN = 22
-
-#Flags parser
-parser = OptionParser('usage: -t <path to tasks trace> [-o <path to aggregated tasks trace>]')
-parser.add_option('-t', dest='tasks_file', type='string', help="the csv file containing the tasks data on which to perform aggregation. This file should comply to the format produced by the tgp analysis")
-parser.add_option('-o', dest='output_file', type='string', help="the name of the output csv file that will be produced. If none is provided, then the output file will be named 'aggregated-tasks.csv'")
-(options, arguments) = parser.parse_args()
-if (options.tasks_file == None):
-    print parser.usage
-    exit(0)
-else:
-    tasks_file = options.tasks_file
-if (options.output_file == None):
-    output_file = DEFAULT_OUT_FILE
-else:
-    output_file = options.output_file
+#Length of a fields of the csv file containing tasks
+FIELDS_LEN = 22
 
 #An array containing all tasks
 tasks = []
@@ -61,16 +46,16 @@ total_tasks = 0
 #The number of valid outer tasks
 valid_outer_tasks = 0
 
-'''
-Class Task contains all data relative to a task, as in the file tasks.csv.
-The purpose of this class is both to hold data and to provide algorithms used to aggregate tasks.
-'''
 class Task:
     '''
-    Initializes the Task class/structure.
-    The first 22 parameters just store the same information as in the tasks.csv file.
+    Class Task contains all data relative to a task, as in the file tasks.csv.
+    The purpose of this class is both to hold data and to provide algorithms used to aggregate tasks.
     '''
     def __init__(self, this_id, class_name, outer_id, exec_n, create_t_id, create_t_class, create_t_name, exec_t_id, exec_t_class, exec_t_name, exec_id, exec_class, entry_time, exit_time, gran, is_t, is_r, is_c, is_fjt, is_r_exec, is_c_exec, is_e_exec):
+        '''
+        Initializes the Task class/structure.
+        The first 22 parameters just store the same information as in the tasks.csv file.
+        '''
         self.this_id = this_id
         self.class_name = class_name
         self.outer_id = outer_id
@@ -101,12 +86,12 @@ class Task:
         self.temp_marked = False
         #Whether the the task has been aggregated, i.e., its granularity has been added to its outer task. If this is false, then the task has no valid outer task and will be written in the aggregated tasks file
         self.aggregated = False
-    '''
-    Implements the recursive visit routine of the DFS algorithm.
-    In the context, it is used to topologically sort the tasks, i.e, every task comes before its outer task.
-    During the visit, the task is appended to the children list of its outer task (if it exists).
-    '''
     def visit(self):
+        '''
+        Implements the recursive visit routine of the DFS algorithm.
+        In the context, it is used to topologically sort the tasks, i.e, every task comes before its outer task.
+        During the visit, the task is appended to the children list of its outer task (if it exists).
+        '''
         if self.marked == True:
             return
         if self.temp_marked == True:
@@ -118,20 +103,20 @@ class Task:
             neighbour.children.append(self)
         self.marked = True
         sorted_tasks.insert(0, self)
-    '''
-    Applies the aggregation rules, returns true if they hold, false otherwise.
-    child: the nested task on which to apply the second part of the rules.
-    '''
     def aggregation_rules(self, child):
+        '''
+        Applies the aggregation rules, returns true if they hold, false otherwise.
+        child: the nested task on which to apply the second part of the rules.
+        '''
         return self.is_t == "F" or (child.is_e_exec == "F" and child.create_t_id == child.exec_t_id)
-    '''
-    Performs aggregation for a task by adding the granularities of its children.
-    If the task has no child, then its granularity is returned.
-    If the task has children, then for each one of them aggregation rules are checked. If the rules hold, then the function is recursively called on the child, and the total
-    granularity is added to the outer task. Last, the child is marked as aggregated.
-    On the other hand, if the rules do not apply to the child, then said child is skipped for the iteration.
-    '''
     def aggregate(self):
+        '''
+        Performs aggregation for a task by adding the granularities of its children.
+        If the task has no child, then its granularity is returned.
+        If the task has children, then for each one of them aggregation rules are checked. If the rules hold, then the function is recursively called on the child, and the total
+        granularity is added to the outer task. Last, the child is marked as aggregated.
+        On the other hand, if the rules do not apply to the child, then said child is skipped for the iteration.
+        '''
         if len(self.children) == 0:
             return self.gran
         else:
@@ -141,28 +126,28 @@ class Task:
                     child.aggregated = True
         return self.gran
 
-'''
-Checks whether the input string contains letters.
-string: the string on which to check the presence of letters.
-Returns true if the string contains letters, false otherwise.
-'''
 def contains_letters(string):
+    '''
+    Checks whether the input string contains letters.
+    string: the string on which to check the presence of letters.
+    Returns true if the string contains letters, false otherwise.
+    '''
     for s in string:
         if s.isalpha():
             return True
     return False
 
-'''
-Reads the tasks.csv file. For each task in the file, as Task object is instantiated and added to the tasks list. The ID of said task is also inserted to the IDs dictionary, pointing to the
-newly created Task instance.
-'''
 def read_csv():
+    '''
+    Reads the tasks.csv file. For each task in the file, as Task object is instantiated and added to the tasks list. The ID of said task is also inserted to the IDs dictionary, pointing to the
+    newly created Task instance.
+    '''
     csv_line_counter = 0
     with open(tasks_file, 'rb') as csvfile:
         csv_reader = csv.reader(csvfile, delimiter=',')
         for row in csv_reader:
-            if len(row) != ROW_LEN:
-                print("Wrong tasks file format")
+            if len(row) != FIELDS_LEN:
+                print("Wrong task trace format")
                 exit(0)
             if csv_line_counter != 0:
                 this_id = row[0]
@@ -213,10 +198,10 @@ def read_csv():
                     total_tasks += 1
             csv_line_counter = csv_line_counter + 1
 
-'''
-Creates and writes the csv file containing the aggregated tasks.
-'''
 def write_csv():
+    '''
+    Creates and writes the csv file containing the aggregated tasks.
+    '''
     with open(output_file, 'w') as csvfile:
         fieldnames = ['ID',
                       'Class',
@@ -271,41 +256,57 @@ def write_csv():
                 global valid_outer_tasks
                 valid_outer_tasks += 1
 
-'''
-Sorts the tasks using DFS.
-'''
 def topological_sort():
+    '''
+    Sorts the tasks using DFS.
+    '''
     for task in tasks:
         if task.marked == False:
             task.visit()
 
-'''
-Aggregates the tasks.
-The functions starts by the last element of the sorted array, as at the end there are the most 'outer' tasks.
-'''
 def aggregate():
+    '''
+    Aggregates the tasks.
+    The functions starts by the last element of the sorted array, as at the end there are the most 'outer' tasks.
+    '''
     index = len(sorted_tasks) - 1
     while index >= 0:
         if sorted_tasks[index].aggregated == False:
             sorted_tasks[index].aggregate()
         index = index - 1
 
-print("")
+if __name__ == "__main__":
+    #Flags parser
+    parser = OptionParser('usage: -t <path to tasks trace> [-o <path to aggregated tasks trace>]')
+    parser.add_option('-t', dest='tasks_file', type='string', help="the task trace on which to perform aggregation. This file should comply to the format produced by the tgp analysis")
+    parser.add_option('-o', dest='output_file', type='string', help="the path to the aggregated task trace that will be produced. If none is provided, then the output trace will be named 'aggregated-tasks.csv'")
+    (options, arguments) = parser.parse_args()
+    if (options.tasks_file is None):
+        print(parser.usage)
+        exit(0)
+    else:
+        tasks_file = options.tasks_file
+    if (options.output_file is None):
+        output_file = DEFAULT_OUT_FILE
+    else:
+        output_file = options.output_file
 
-print("Starting aggregation...")
+    print("")
 
-read_csv()
+    print("Starting aggregation...")
 
-topological_sort()
+    read_csv()
 
-aggregate()
+    topological_sort()
 
-write_csv()
+    aggregate()
 
-print("")
-print("%s tasks out of %s have been aggregated" % (str((total_tasks - valid_outer_tasks)), str(total_tasks)))
-print("")
+    write_csv()
 
-print("Aggregation completed")
+    print("")
+    print("%s tasks out of %s have been aggregated" % (str((total_tasks - valid_outer_tasks)), str(total_tasks)))
+    print("")
 
-print("")
+    print("Aggregation completed")
+
+    print("")

@@ -1,3 +1,5 @@
+This directory contains test traces to use with aggregation.py. A brief description for each trace follows:
+
 test_invalid_chain.csv: a chain of tasks spawning tasks, i.e., T1 -> T2 -> ... -> Tn, where there is no valid outer task. The output will be therefore the same as the input.
 test_many_invalid_nested.csv: many of the nested task, having threads as outer tasks, do not comply with the nested task rules. 
 test_mix_outer.csv: in this file some task have an outer task and some have not, i.e., some tasks were spawned by another task while others were not.
