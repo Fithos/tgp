@@ -5,36 +5,41 @@ import sys
 import csv
 
 '''
-This program performs task aggregation, i.e., aggregates the execution of a nested task to its outer task. As a result of this operation, the granularities of the inner tasks are summed
-up with the one from the outer task.
+Documentation:
+
+Some tasks may be nested, i.e., they fully execute inside the dynamic extent of the execution method of another task, which is called outer task.
+This script performs task aggregation, i.e., aggregates a nested task to its outer task.
+
+As a result of this operation, the granularity of the nested task is summed
+up to the one of its outer task.
 Task aggregation is performed on nested tasks if one of the following conditions is satisfied:
    1) the outer task is not a thread
-   2) the outer task is a thread, and both the following conditions are true:
+   2) the outer task is a thread and both the following conditions are true:
        2.1) the nested task has not been submitted
        2.2) the nested task is created and executed by the same thread
 
-To perform aggregation, the tasks are modelled as a directed graph, where edges go from nested tasks to their outer one. Topological sorting is then used solve the dependencies.
+To perform aggregation, tasks are modelled in a directed graph, where an edge connects a nested task to its outer task. Topological sort is then used to aggregate tasks matching the conditions above.
 
-The result is a new trace containing the aggregated tasks (named 'aggregated-tasks.csv' by default).
+This script produces a new trace (called 'aggregated task trace' and named 'aggregated-tasks.csv' by default) containing the task trace after the aggregation step.
 
-Usage: ./aggregation.py -t <path to task trace> [-o <path to aggregated task trace>]
+Usage: ./aggregation.py -t <path to task trace> [-o <path to aggregated task trace (output)>]
 
 Parameters:
--> -t: the task trace on which to perform aggregation. This file should comply to the format produced by the tgp analysis
+-> -t: the path to the task trace on which to perform aggregation. This file should have been produced by tgp either with a bytecode profiling or reference-cycles profiling run.
 Optional parameters:
--> -o: the name of the trace that will be produced. If none is provided, then the output file will be named 'aggregated-tasks.csv'
+-> -o: the path to the output trace (aggregated task trace) to be produced. If none is provided, then the output trace will be produced in './aggregated-tasks.csv'
 '''
 
-#Default name for aggregated tasks
+#Default name of aggregated task trace
 DEFAULT_OUT_FILE = "aggregated-tasks.csv"
 
-#Length of a fields of the csv file containing tasks
+#Number of columns in task trace
 FIELDS_LEN = 22
 
-#An array containing all tasks
+#A list containing all tasks
 tasks = []
 
-#An array containing topologically sorted tasks
+#A list containing topologically sorted tasks
 sorted_tasks = []
 
 #A dictionary associating an ID with the correspoding task object
@@ -84,12 +89,12 @@ class Task:
         self.marked = False
         #Whether the task has been temporaneously marked in the DFS algorithm
         self.temp_marked = False
-        #Whether the the task has been aggregated, i.e., its granularity has been added to its outer task. If this is false, then the task has no valid outer task and will be written in the aggregated tasks file
+        #Whether the the task has been aggregated, i.e., its granularity has been added to its outer task. If this is false, then the task has no valid outer task and will be written in the aggregated task trace
         self.aggregated = False
     def visit(self):
         '''
         Implements the recursive visit routine of the DFS algorithm.
-        In the context, it is used to topologically sort the tasks, i.e, every task comes before its outer task.
+        It is used to topologically sort the tasks, i.e, every task will be visited before its outer task.
         During the visit, the task is appended to the children list of its outer task (if it exists).
         '''
         if self.marked == True:
@@ -111,11 +116,11 @@ class Task:
         return self.is_t == "F" or (child.is_e_exec == "F" and child.create_t_id == child.exec_t_id)
     def aggregate(self):
         '''
-        Performs aggregation for a task by adding the granularities of its children.
+        Performs aggregation on a task by adding the granularities of its children.
         If the task has no child, then its granularity is returned.
         If the task has children, then for each one of them aggregation rules are checked. If the rules hold, then the function is recursively called on the child, and the total
         granularity is added to the outer task. Last, the child is marked as aggregated.
-        On the other hand, if the rules do not apply to the child, then said child is skipped for the iteration.
+        On the other hand, if the rules do not apply to the child, then such child is skipped.
         '''
         if len(self.children) == 0:
             return self.gran
@@ -139,7 +144,7 @@ def contains_letters(string):
 
 def read_csv():
     '''
-    Reads the tasks.csv file. For each task in the file, as Task object is instantiated and added to the tasks list. The ID of said task is also inserted to the IDs dictionary, pointing to the
+    Reads the task trace. For each task in the trace, as Task object is instantiated and added to the tasks list. The ID of such task is also inserted to the IDs dictionary, pointing to the
     newly created Task instance.
     '''
     csv_line_counter = 0
@@ -200,7 +205,7 @@ def read_csv():
 
 def write_csv():
     '''
-    Creates and writes the csv file containing the aggregated tasks.
+    Creates and writes the csv file containing the aggregated task trace.
     '''
     with open(output_file, 'w') as csvfile:
         fieldnames = ['ID',
@@ -267,7 +272,7 @@ def topological_sort():
 def aggregate():
     '''
     Aggregates the tasks.
-    The functions starts by the last element of the sorted array, as at the end there are the most 'outer' tasks.
+    The functions starts from the last element of the sorted array, as at the outer-most tasks are at the end.
     '''
     index = len(sorted_tasks) - 1
     while index >= 0:
@@ -277,9 +282,9 @@ def aggregate():
 
 if __name__ == "__main__":
     #Flags parser
-    parser = OptionParser('usage: -t <path to tasks trace> [-o <path to aggregated tasks trace>]')
-    parser.add_option('-t', dest='tasks_file', type='string', help="the task trace on which to perform aggregation. This file should comply to the format produced by the tgp analysis")
-    parser.add_option('-o', dest='output_file', type='string', help="the path to the aggregated task trace that will be produced. If none is provided, then the output trace will be named 'aggregated-tasks.csv'")
+    parser = OptionParser("Usage: ./aggregation.py -t <path to task trace> [-o <path to aggregated task trace (output)>]")
+    parser.add_option('-t', dest='tasks_file', type='string', help="path to the task trace on which to perform aggregation. This file should have been produced by tgp either with a bytecode profiling or reference-cycles profiling run", metavar="TASK_TRACE")
+    parser.add_option('-o', dest='output_file', type='string', help="path to the output trace (aggregated task trace) to be produced. If none is provided, then the output trace will be produced in './aggregated-tasks.csv'", metavar="AGGR_TASK_TRACE")
     (options, arguments) = parser.parse_args()
     if (options.tasks_file is None):
         print(parser.usage)
@@ -293,7 +298,7 @@ if __name__ == "__main__":
 
     print("")
 
-    print("Starting aggregation...")
+    print("Starting task aggregation...")
 
     read_csv()
 
@@ -307,6 +312,6 @@ if __name__ == "__main__":
     print("%s tasks out of %s have been aggregated" % (str((total_tasks - valid_outer_tasks)), str(total_tasks)))
     print("")
 
-    print("Aggregation completed")
+    print("Task aggregation completed.")
 
     print("")

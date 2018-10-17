@@ -310,7 +310,7 @@ To perform tasks aggregation on a task trace, enter the *postprocessing/* folder
 ./aggregation.py -t <path to task trace> [-o <path to aggregated task trace (output)>]
 ```
 
-The script creates a new trace, called *aggregated task trace* (named *aggregated-tasks.csv* by default) containing the aggregated tasks.
+The script creates a new trace, called *aggregated task trace* (named *aggregated-tasks.csv* by default) containing the task trace after the aggregation step.
 
 The directory *postprocessing/tests-aggregation/* contains several test traces for the aggregation tool: documentation on them can be found in *postprocessing/tests-aggregation/documentation.txt*.
 
