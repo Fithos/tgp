@@ -1,3 +1,5 @@
+*IMPORTANT*: this branch is under development and is being actively modified. 
+
 # tgp
 
 *tgp* is a task-granularity profiler for multi-threaded, task-parallel applications running on the Java Virtual Machine (JVM).
@@ -18,8 +20,8 @@ In addition, *tgp* profiles calling contexts, i.e., all methods open on the call
     * [Usage](#usage)
        + [Bytecode Profiling](#bytecode-profiling)
        + [Reference-cycles Profiling](#reference-cycles-profiling)
-       + [JVM- and OS-layer Metrics](#jvm--and-os-layer-metrics)
        + [Calling-context Profiling](#calling-context-profiling)
+       + [JVM- and OS-layer Metrics](#jvm--and-os-layer-metrics)
        + [Output](#output)
 6. [Profiling Your Own Application](#profiling-your-own-application)
 7. [Output Files](#output-files)
@@ -32,7 +34,7 @@ In addition, *tgp* profiles calling contexts, i.e., all methods open on the call
 8. [Post-processing and Characterization](#post-processing-and-characterization)
     * [Post-processing](#post-processing)
         + [Task Aggregation](#task-aggregation)
-        + [Garbage Collection Filtering](#garbage-collection-filtering)
+        + [Garbage-collection Filtering](#garbage-collection-filtering)
     * [Characterization](#characterization)
         + [Diagnosis](#diagnosis)
         + [Fine-grained Tasks](#fine-grained-tasks)
@@ -329,7 +331,7 @@ Following the rules of task aggregation, 15 tasks out of 16 are aggregated, resu
 
 **Note:** more details on the script and its parameters can be found in *post-processing/aggregation.py*, in the documentation section. Alternatively, run  `./aggregation.py -h`.
 
-#### Garbage Collection Filtering
+#### Garbage-collection Filtering
 
 It is possible that the CPU and CS measurements are taken during a garbage collection. If this is not desired, users can run the *gc-filtering.py* script to filter out CPU and CS measurements obtained during GC cycles.
 
