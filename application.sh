@@ -17,7 +17,6 @@ set -a
 
 #Sets the flags to be sent to the JVM executing the target application, if any 
 #Uncomment to change the flags to be sent to the JVM executing the target application
-#Flags are assigned with a String value, and are separated by a single space
 #APP_FLAGS="flags-of-application"
 
 #Sets target application main class in the target jar file
@@ -26,7 +25,6 @@ set -a
 
 #Sets the arguments to be sent to the target application, if the application requires them
 #Uncomment to change the arguments to be sent to the target application
-#Arguments should be separated by a single space
 #APP_ARGS="arguments-of-application"
 
 #Prevents any further variable to be exported

@@ -1,5 +1,3 @@
-Please do not use this branch as it is currently being used for testing purposes.
-
 # tgp
 
 *tgp* is a task-granularity profiler for multi-threaded, task-parallel applications running on the Java Virtual Machine (JVM).
@@ -44,7 +42,7 @@ In addition, *tgp* profiles calling contexts, i.e., all methods open on the call
 
 ## Terminology
 
-**Task**: *tgp* considers as task every subtype of the interfaces java.lang.Runnable and java.util.concurrent.Callable, or the abstract class java.util.concurrent.ForkJoinTask.
+**Task**: *tgp* considers as task every subtype of the interfaces java.lang.Runnable and java.util.concurrent.Callable, or of the abstract class java.util.concurrent.ForkJoinTask.
 
 **Task Granularity**: task granularity represents the amount of work carried out by each parallel task. In *tgp*, task granularity is defined as all the computations performed in the dynamic extent of the methods Runnable.run, Callable.call, and ForkJoinTask.exec, that are collectively known as *execution methods*.
 
@@ -80,7 +78,7 @@ In addition, *tgp* profiles calling contexts, i.e., all methods open on the call
 
 ### OS Layer
 
-*tgp* profiles CPU utilization (separating user and kernel components) and the number of context switches (CS) experienced by the target application. The former allows one to determine whether the CPU is well utilized by the application. Context switches can be used as a measure of contention between tasks, as an excessive number of context switches are an indication that tasks executing in parallel significantly interfere with each other due to the presence of numerous blocking primitives (caused e.g. by I/O activities, synchronization, and message passing).
+*tgp* profiles CPU utilization (separating user and kernel components) and the number of context switches (CS) experienced by the target application. The former allows one to determine whether the CPU is well utilized by the application. Context switches can be used as a measure of contention between tasks, as an excessive number of context switches is an indication that tasks executing in parallel significantly interfere with each other due to the presence of numerous blocking primitives (caused e.g. by I/O activities, synchronization, and message passing).
 
 ### Hardware Layer
 
@@ -153,13 +151,13 @@ Then, run tgp by using the following command instead of the ones listed in secti
 
 Here is an example of how variables in *application.sh* should be set to profile an application with *tgp* which is normally executed as follows:
 
-`java -cp myapp.jar:mysecondappjar.jar:myfolder -Xms256m -Xmx1g MyMainClass arg1 arg2`
+`java -cp /home/user/myapp.jar:/home/user/mysecondappjar.jar:/home/user/myfolder -Xms256m -Xmx1g MyMainClass arg1 arg2`
 
 assuming that the root folder of *tgp* is located at `~/tgp/`.
 
 ```
 ROOT_PATH="~/tgp/"
-APP_CLASSPATH="myapp.jar:mysecondappjar.jar:myfolder"
+APP_CLASSPATH="/home/user/myapp.jar:/home/user/mysecondappjar.jar:/home/user/myfolder"
 APP_FLAGS="-Xms256m -Xmx1g"
 APP_MAIN_CLASS="MyMainClass"
 APP_ARGS="arg1 arg2”
@@ -181,15 +179,15 @@ The file is composed by several columns as follows:
 
 * ID: a unique JVM-generated code (hashCode) for each task
 * Class: the class of the task
-* Outer Task ID: the ID of the outer task (-1 if the task is not executed, 0 if the task is not nested) [1]
+* Outer Task ID: the ID of the outer task [1]
 * Execution N.: an ordinal representing the i-th task execution [2]
-* Creation thread ID: the ID of the thread which created the task
+* Creation thread ID: a unique JVM-generated code that identifies the thread which created the task
 * Creation thread class: the class of the thread which created the task
 * Creation thread name: the name of the thread which created the task
-* Execution thread ID: the ID of the thread which executed the task (-1 if the task was created but not executed)
+* Execution thread ID: a unique JVM-generated code that identifies the thread which executed the task (-1 if the task was created but not executed)
 * Execution thread class: the class of the thread which executed the task (null if the task was not executed)
 * Execution thread name: the name of the thread which executed the task (null if the task was not executed)
-* Executor ID: the ID of the task execution framework the task was submitted to (-1 if the task was not submitted)
+* Executor ID: a unique JVM-generated code that identifies the task execution framework the task was submitted to (-1 if the task was not submitted)
 * Executor class: the class of the task execution framework the task was submitted to (null if the task was not submitted)
 * Entry execution time: the timestamp when task execution started (-1 if the task was not executed)
 * Exit execution time: the timestamp when task execution completed (-1 if the task was not executed)
@@ -202,7 +200,7 @@ The file is composed by several columns as follows:
 * Is call() executed: 'T' if the task is a subtype of java.lang.Callable and was executed by calling the call() method, 'F' otherwise
 * Is exec() executed: 'T' if the task is a subtype of java.util.concurrent.ForkJoinTask and was executed by calling the exec() method, 'F' otherwise
 
-[1]: the purpose of this column is to identify *nested tasks*. A task is nested if it fully executes inside the dynamic extent of the execution method of another task, which is called *outer task*. This column contains the ID of the outer task, if the task is nested. Information on the outer task can be found in another row of this file. See [Task Aggregation](#task-aggregation) for more information.
+[1]: the purpose of this column is to identify *nested tasks*. A task is nested if it fully executes inside the dynamic extent of the execution method of another task, which is called *outer task*. This column contains the ID (>0) of the outer task, if the task is nested. Information on the outer task can be found in another row of this file. If the task is not nested, this column contains 0. If the task is not executed, this column contains -1. See [Task Aggregation](#task-aggregation) for more information.
 
 [2]: a task can be executed multiple times (i.e., its execution method is executed to completion more than once). Each task execution appears in this file on a different row. The value *i* of this field denotes that this row contains metrics related to the *i*-th execution of this task.
 
@@ -231,7 +229,7 @@ The methods are written following the representation of method descriptors defin
 
 In the example, method *main*, defined in class *ch.usi.dag.tgp.test.Example*, which takes an array (`[`) of *String* (`Ljava/lang/String;`) as input parameter and with return type *void* (`V`), calls a constructor (*<init>*) of class *MyTask* (an inner class, defined inside *ch.usi.dag.tgp.test.Example*), which takes an array (`[`) of *Object* (`Ljava/lang/Object;`) as input parameter.
 
-To exemplify how calling context profiling can help the optimization of task granularity, consider the following scenario. *MyTask* is a task whose purpose is to processes some data, passed as input of a constructor as an array of `Object`. The granularity of *MyTask* depends on the kind and the size of such array, since larger arrays would require more computations to be performed by *MyTask* to process all data inside, and vice versa.
+To exemplify how calling context profiling can help the optimization of task granularity, consider the following scenario. *MyTask* is a task whose purpose is to process some data, passed as input of a constructor as an array of `Object`. The granularity of *MyTask* depends on the kind and the size of such array, since larger arrays would require more computations to be performed by *MyTask* to process all data inside, and vice versa.
 
 Suppose that the granularity of *MyTask* has been classified by the user as too large, and thus needs to be optimized. To do so, one can decrease the amount of data processed by *MyTask*. To this end, one may need to modify the code where the task constructor is called. Such code is contained in the method appearing right before *MyTask.<init>* (i.e., *Example.main*) in the above calling context, which triggers the creation of a new *MyTask* by calling its constructor, passing an array of *Object* as input parameter. The user can then optimize task granularity by modifying *Example.main*, e.g. decreasing the size of the array passed to *MyTask*.  
 
@@ -286,17 +284,17 @@ The first column represents the event profiled (i.e., the start or the end of a 
 
 ## Post-processing and Characterization
 
-This release comes with scripts to further process the traces produced by *tgp*. These scripts are of two types: the first syntactically filters data and removes garbage, while the second helps the user performing granularity analysis.
+This release comes with scripts to further process the traces produced by *tgp*. These scripts are of two types: the first syntactically filters data and removes garbage, while the second helps the user performing task-granularity analysis.
 
 ### Post-processing
 
-Post-processing allows the user to further filter the results produced by the *tgp* analysis: in particular, the user can aggregate tasks and filter out context-switches and CPU utilization measurements obtained during garbage collection cycles.
+Post-processing allows the user to further filter the results produced by *tgp*. In particular, the user can aggregate tasks and filter out context-switches and CPU utilization measurements obtained during garbage collection cycles.
 Post-processing scripts can be found in the *postprocessing/* directory.
 
 #### Task Aggregation
 
 Some tasks may be *nested*, i.e., they fully execute inside the dynamic extent of the execution method of another task, which is called *outer task*. 
-Since the nested and outer tasks cannot execute in parallel, as a general rule nested tasks are aggregated to their outer task, resulting in a single larger task. If the outer task is itself nested, then it is recursively aggregated until a non-nested task is found.
+Since the nested and outer tasks cannot execute in parallel, nested tasks should be aggregated to their outer task, resulting in a single larger task. Task aggregation performs such operation. If the outer task is itself nested, the task is recursively aggregated until a non-nested task is found.
 
 Task aggregation is performed on nested tasks if one of the following conditions is true:
 1. the outer task is not a thread
@@ -304,15 +302,15 @@ Task aggregation is performed on nested tasks if one of the following conditions
     * the nested task has not been submitted
     * the nested task is created and executed by the same thread
 
-To perform tasks aggregation on a task trace, enter the *postprocessing/* and enter the following command:
+To perform tasks aggregation on a task trace, enter the *postprocessing/* folder and type the following command:
 
 ```
-./aggregation.py -t <path to tasks trace> [-o <path to aggregated tasks trace>]
+./aggregation.py -t <path to task trace> [-o <path to aggregated task trace (output)>]
 ```
 
-The script creates a new trace (named *aggregated-tasks.csv* by default) containing the aggregated tasks.
+The script creates a new trace, called *aggregated task trace* (named *aggregated-tasks.csv* by default) containing the aggregated tasks.
 
-The directory *postprocessing/tests-aggregation/* contains several test traces for the aggregation tool: documentation on them can be found at *postprocessing/tests-aggregation/documentation.txt*.
+The directory *postprocessing/tests-aggregation/* contains several test traces for the aggregation tool: documentation on them can be found in *postprocessing/tests-aggregation/documentation.txt*.
 
 As an example, running the script with test *test_valid_chain.csv* as following:
 
@@ -320,32 +318,32 @@ As an example, running the script with test *test_valid_chain.csv* as following:
 ./aggregation.py -t tests-aggregation/test_valid_chain.csv
 ```
 
-yields the following result (trace):
+yields the following aggregated task trace:
 
 ```
 ID,Class,Outer Task ID,Execution N.,Creation thread ID,Creation thread class,Creation thread name,Execution thread ID,Execution thread class,Execution thread name,Executor ID,Executor class,Entry execution time,Exit execution time,Granularity,Is Thread,Is Runnable,Is Callable,Is ForkJoinTask,Is run() executed,Is call() executed,Is exec() executed
 6,C6,0,1,0,cl,n,1,etc,etn,1,ec,150,155,130,T,F,F,F,F,T,F
 ```
 
-The test trace contains a chain of tasks, i.e., one task spawns another task, which in turn spawns another task, and so on. Furthermore, all outer tasks are either not threads or are threads and both nested tasks are valid: therefore, all tasks are nested into the first created task, which in this example has ID 6.
+Following the rules of task aggregation, 15 tasks out of 16 are aggregated, resulting in a single entry in the aggregated task trace.  
 
-**Note:** more details on the script and its parameters can be found at post-processing/aggregation.py in the documentation section or run `./aggregation.py -h`.
+**Note:** more details on the script and its parameters can be found in *post-processing/aggregation.py*, in the documentation section. Alternatively, run  `./aggregation.py -h`.
 
 #### Garbage Collection Filtering
 
-While context switches and CPU utilization measurements are being taken, it is possible that garbage collection is active: if GC cycles should not be taken into account for further analysis, then thi script can be used to filter out context switches and CPU measurements obtained during GC cycles.
+It is possible that the CPU and CS measurements are taken during a garbage collection. If this is not desired, users can run the *gc-filtering.py* script to filter out CPU and CS measurements obtained during GC cycles.
 
-To perform the filtering, enter the *postprocessing/* directory and enter the following command:
+To perform the filtering, enter the *postprocessing/* directory and type the following command:
 
 ```
-./gc-filtering.py --cs <path to context switches trace> --cpu <path to CPU trace> --gc <path to GC trace> [--outcs <path to filtered context switches trace> --outcpu <path to filteredCPU trace>]
+./gc-filtering.py --cs <path to CS trace> --cpu <path to CPU trace> --gc <path to GC trace> [--outcs <path to filtered CS trace (output)> --outcpu <path to filtered CPU trace (output)>]
 ```
 
-The script creates two new traces (named *filtered-cs.csv* and *filtered-cpu.csv* by default) containing the filtered context switches and CPU utilization measurements respectively.
+The script creates two new traces (named *filtered-cs.csv* and *filtered-cpu.csv* by default) containing the filtered CS and CPU utilization measurements, respectively.
 
 The directory *postprocessing/tests-gc-filtering/* contains several test traces for the filtering tool.
 
-As an example, running the script with tests *cs.csv*, *cpu_in_cs.csv*, and *gc_in_cs.csv* as following:
+As an example, running the script on the test traces *cs.csv*, *cpu_in_cs.csv*, and *gc_in_cs.csv* as following:
 
 ```
 ./gc-filtering.py --cs tests-gc-filtering/cs.csv --cpu tests-gc-filtering/cpu_in_cs.csv --gc tests-gc-filtering/gc_in_cs.csv
@@ -353,6 +351,7 @@ As an example, running the script with tests *cs.csv*, *cpu_in_cs.csv*, and *gc_
 
 yields the following result (traces):
 
+filtered-cs.csv
 ```
 Timestamp (ns),Context Switches
 7602317094530472.0,72432.0
@@ -364,6 +363,7 @@ Timestamp (ns),Context Switches
 7602317094530500.0,81392.0
 ```
 
+filtered-cpu.csv
 ```
 Timestamp (ns),CPU utilization (user),CPU utilization (system)
 7602317094530479,0.0,25.0
@@ -373,29 +373,30 @@ Timestamp (ns),CPU utilization (user),CPU utilization (system)
 7602317094530504,0.0,0.0
 ```
 
-This script filters out all context switches and all CPU measurements whose timestamp falls within GC cycles. For instance, in the filtered CPU trace it can be noticed that there is a considerable gap between timestamps 7602317094530484 and 7602317094530495: in fact, in this gap 6 GC cycles take place.
+This script filters out all context switches and all CPU measurements whose timestamp falls within GC cycles, resulting in only 7 (out of 22) and 5 (out of 24) entries in the filtered CS and CPU trace, respectively. 
 
-**Note:** more details on the script and its parameters can be found at post-processing/gc-filtering.py in the documentation section or run `./gc-filtering.py -h`.
+**Note:** more details on the script and its parameters can be found in post-processing/gc-filtering.py, in the documentation section. Alternatively, run `./gc-filtering.py -h`.
 
 ### Characterization
 
-Characterization scripts are meant to guide the user towards distinguishing between fine- and coarse-grained tasks: this distinction can be made based on different thresholds, thus allowing the user to customize the analysis.
+Characterization scripts are meant to guide the user towards distinguishing fine- and coarse-grained tasks. This distinction is based on different thresholds, thus allowing the user to customize the analysis.
 
-**Note:** it is highlighted that these scripts only provide general purpose analyses: the user is encouraged to create custom ones.
+**Note:** we remark that characterization scripts only provide general purpose analyses. The user is encouraged to create custom ones.
+
 Characterization scripts can be found in the *characterization/* directory.
 
-Directory *characterization/tests/* contains test traces for all the following scripts.
+Directory *characterization/tests/* contains test traces for all characterization scripts.
 
-**Note:** for more accurate results, traces containing context switches and CPU utilization should have first been filtered (see [Garbage Collection Filtering](#garbage-collection-filtering)).
+**Note:** for more accurate results, traces containing context switches and CPU utilization measurements should have first been filtered (see [Garbage Collection Filtering](#garbage-collection-filtering)).
 
 #### Diagnosis
 
-This script provides basic statistics on task granularity and the average of both the number of context switches and CPU utilization. The script also includes the possibility to perform this analysis on tasks belonging to a specific class (by providing the name of the class via the flag --sc).
+This script provides basic statistics on task granularity and the average number of context switches and CPU utilization. The script also offers the possibility to restrict this analysis on tasks belonging to a specific class (by providing the name of the class via the flag --sc).
 
-To perform diagnostics on tasks, enter the *characterization/* and enter the following command:
+To perform diagnostics on tasks, enter the *characterization/* folder and type the following command:
 
 ```
-./diagnose.py -t <path to tasks trace> --cs <path to context switches trace> --cpu <path to CPU trace> [--sc <class name> --cg <centre granularity> -o <path to results trace>]
+./diagnose.py -t <path to task trace> --cs <path to CS trace> --cpu <path to CPU trace> [--sc <class name> -o <path to results trace>]
 ```
 
 The script creates a new trace (named *diagnostics.csv* by default) containing the described statistics. The results of the analysis will also be printed on the standard output.
@@ -412,13 +413,13 @@ yields the following result (stdout):
 TASKS STATISTICS
 -> Total number of tasks: 29
 -> Average granularity: 2965486.24138
--> One percentile granularity: 4
--> Five percentile granularity: 12
--> Fifty percentage (median) granularity: 34436
--> Ninety-five percentile granularity: 2535634
--> Ninety-nine percentile granularity: 34234523
--> IQC: 244672
--> Whiskers range: [0, 612242.0]
+-> 1st percentile - granularity: 4
+-> 5th percentile - granularity: 12
+-> 50th percentile (median) - granularity: 34436
+-> 95th percentile - granularity: 2535634
+-> 99th percentile - granularity: 34234523
+-> IQC - granularity: 244672
+-> Whiskers range - granularity: [0, 612242.0]
 -> Percentage of tasks having granularity within whiskers range: 79.3103448276%
 -> Percentage of tasks with granularity around 100000: 37.9310344828%
 
@@ -429,16 +430,17 @@ CPU STATISTICS
 -> Average CPU utilization: 40.8868421053+-4.49185598114
 ```
 
-**Note:** more details on the script and its parameters can be found at characterization/diagnose.py in the documentation section or run `./diagnose.py -h`.
+**Note:** more details on the script and its parameters (including those not shown here) can be found in *characterization/diagnose.py*, in the documentation section. Alternatively, run `./diagnose.py -h`.
 
 #### Fine-grained Tasks
 
-This script finds classes containing only fine-grained tasks based on user-defined thresholds. The script then associates to each class the average granularity (i.e., the average of the granularities of all its tasks) and the average number of context switches belonging to such class.
+This script finds classes containing only fine-grained tasks based on user-defined thresholds. 
+For each such class, the script reports the average granularity of all tasks belonging to the class, and the average number of context switches occurred when tasks of the class were in execution. 
 
-To run this script, enter the *characterization/* and enter the following command:
+To run this script, enter the *characterization/* folder and type the following command:
 
 ```
-./fine_grained.py -t <path to tasks trace> --cs <path to context switches trace> [--Mr <maximum relative granularities range> --ga <greater or equal average> --mt <minimum number of tasks per class> --Mg <maximum task granularity> -o <path to results trace>]
+./fine_grained.py -t <path to task trace> --cs <path to CS trace> [-o <path to results trace>]
 ```
 
 The script creates a new trace (named *fine-grained.csv* by default). The results of the analysis will also be printed on the standard output.
@@ -446,28 +448,34 @@ The script creates a new trace (named *fine-grained.csv* by default). The result
 As an example, running the script as following:
 
 ```
-./fine_grained.py -t tests/test-tasks.csv --cs tests/test-cs.csv --Mr 1000 --Mg 10000000
+./fine_grained.py -t tests/test-tasks.csv --cs tests/test-cs.csv
 ```
 
 yields the following result (stdout): 
 
 ```
-Average number of context switches outside non-fine-grained classes: 147.829787234
+Average number of context switches experienced when fine-grained tasks are not in execution: 175.416666667cs/100ms
 
 Class: class6 -> Average granularity: 1443.0 -> Average number of context switches: 197.5cs/100ms
 Class: class7 -> Average granularity: 4.0 -> Average number of context switches: 0cs/100ms
+Class: class4 -> Average granularity: 61644.5 -> Average number of context switches: 89.75cs/100ms
+Class: class5 -> Average granularity: 301304.666667 -> Average number of context switches: 129.8cs/100ms
+Class: class2 -> Average granularity: 9186281.4 -> Average number of context switches: 126.166666667cs/100ms
+Class: class3 -> Average granularity: 695149.666667 -> Average number of context switches: 185.142857143cs/100ms
+Class: class1 -> Average granularity: 3860539.66667 -> Average number of context switches: 137.076923077cs/100ms
 ```
 
-**Note:** more details on the script and its parameters can be found at characterization/fine\_grained.py in the documentation section or run `./fine_grained.py -h`.
+**Note:** more details on the script and its parameters (including those not shown here) can be found in *characterization/fine_grained.py*, in the documentation section. Alternatively, run  `./fine_grained.py -h`.
 
 #### Coarse-grained Tasks
 
-This script finds classes containing only coarse-grained tasks based on user-defined thresholds. The script then associates to each class the average granularity, the average number of context switches, and the average CPU utilization (both user and kernel components) belonging to such class.
+This script finds classes containing only coarse-grained tasks based on user-defined thresholds. 
+For each such class, the script reports the average granularity of all tasks belonging to the class, and the average number of context switches and CPU utilization experienced when tasks of the class were in execution.
 
-To run this script, enter the *characterization/* and enter the following command:
+To run this script, enter the *characterization/* folder and type the following command:
 
 ```
-./coarse_grained.py -t <path to tasks trace> --cs <path to context switches trace> --cpu <path to CPU trace> [--ming <minimum task granularity> --maxg <maximum task granularity> -o <path to results trace>]
+./coarse_grained.py -t <path to task trace> --cs <path to CS trace> --cpu <path to CPU trace> [-o <path to results trace>]
 ```
 
 The script creates a new trace (named *coarse-grained.csv* by default). The results of the analysis will also be printed on the standard output.
@@ -481,7 +489,7 @@ As an example, running the script as following:
 yields the following result (stdout):
 
 ```
-Average number of context switches outside non-coarse-grained classes: 149.976190476
+Average number of context switches experienced when coarse-grained tasks are not in execution: 149.976190476cs/100ms
 
 CLASSES CONTAINING COARSE-GRAINED TASKS:
 
@@ -495,13 +503,13 @@ CLASSES CONTAINING COARSE-GRAINED TASKS:
    Average CPU utilization: 34.45
 ```
 
-**Note:** more details on the script and its parameters can be found at characterization/coarse\_grained.py in the documentation section or run `./coarse_grained.py -h`.
+**Note:** more details on the script and its parameters (including those not shown here) can be found in *characterization/coarse_grained.py*, in the documentation section. Alternatively, run `./coarse_grained.py -h`.
 
 ## Additional Tests
 
 This release is shipped with 12 test classes. By default, *tgp* profiles class *TestRunAndJoin* in any profiling mode selected.
 
-You can change the test class to be profiled (see [Profiling Your Own Application](#profiling-your-own-application)) to try *tgp* on different use cases. To do so, modify *application.sh* file as follows:
+You can change the test class to be profiled (see [Profiling Your Own Application](#profiling-your-own-application)) to try *tgp* on different applications. To do so, modify *application.sh* file as follows:
 
 `APP_MAIN_CLASS="fully-qualified-name-of-test-class"`
 
@@ -522,6 +530,8 @@ You can run the following test classes (all of them defined in package ch.usi.da
 For example, to profile class *TestNestedThreads*, modify the *application.sh* file as follows:
 
 `APP_MAIN_CLASS="ch.usi.dag.tgp.test.TestNestedThreads"`
+
+leaving all other variables commented.
 
 ## About
 
