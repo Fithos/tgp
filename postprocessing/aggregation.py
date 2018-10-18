@@ -4,30 +4,21 @@ from optparse import OptionParser
 import sys
 import csv
 
-'''
-Documentation:
+helper='''Usage: ./aggregation.py -t <path to task trace> [-o <path to aggregated task trace (output)>]
+    
+Some tasks may be nested, i.e., they fully execute inside the dynamic extent of the execution method of another task, which is called outer task. This script performs task aggregation, i.e., aggregates a nested task to its outer task.
 
-Some tasks may be nested, i.e., they fully execute inside the dynamic extent of the execution method of another task, which is called outer task.
-This script performs task aggregation, i.e., aggregates a nested task to its outer task.
-
-As a result of this operation, the granularity of the nested task is summed
-up to the one of its outer task.
+As a result of this operation, the granularity of the nested task is summed up to the one of its outer task.
 Task aggregation is performed on nested tasks if one of the following conditions is satisfied:
-   1) the outer task is not a thread
-   2) the outer task is a thread and both the following conditions are true:
-       2.1) the nested task has not been submitted
-       2.2) the nested task is created and executed by the same thread
+
+  1) the outer task is not a thread
+  2) the outer task is a thread and both the following conditions are true:
+    2.1) the nested task has not been submitted
+    2.2) the nested task is created and executed by the same thread
 
 To perform aggregation, tasks are modelled in a directed graph, where an edge connects a nested task to its outer task. Topological sort is then used to aggregate tasks matching the conditions above.
 
 This script produces a new trace (called 'aggregated task trace' and named 'aggregated-tasks.csv' by default) containing the task trace after the aggregation step.
-
-Usage: ./aggregation.py -t <path to task trace> [-o <path to aggregated task trace (output)>]
-
-Parameters:
--> -t: the path to the task trace on which to perform aggregation. This file should have been produced by tgp either with a bytecode profiling or reference-cycles profiling run.
-Optional parameters:
--> -o: the path to the output trace (aggregated task trace) to be produced. If none is provided, then the output trace will be produced in './aggregated-tasks.csv'
 '''
 
 #Default name of aggregated task trace
@@ -282,9 +273,9 @@ def aggregate():
 
 if __name__ == "__main__":
     #Flags parser
-    parser = OptionParser("Usage: ./aggregation.py -t <path to task trace> [-o <path to aggregated task trace (output)>]")
-    parser.add_option('-t', dest='tasks_file', type='string', help="path to the task trace on which to perform aggregation. This file should have been produced by tgp either with a bytecode profiling or reference-cycles profiling run", metavar="TASK_TRACE")
-    parser.add_option('-o', dest='output_file', type='string', help="path to the output trace (aggregated task trace) to be produced. If none is provided, then the output trace will be produced in './aggregated-tasks.csv'", metavar="AGGR_TASK_TRACE")
+    parser = OptionParser(helper)
+    parser.add_option('-t', '--task', dest='tasks_file', type='string', help="path to the task trace on which to perform aggregation. This file should have been produced by tgp either with a bytecode profiling or reference-cycles profiling run", metavar="TASK_TRACE")
+    parser.add_option('-o', '--output', dest='output_file', type='string', help="path to the output trace (aggregated task trace) to be produced. If none is provided, then the output trace will be produced in './aggregated-tasks.csv'", metavar="AGGR_TASK_TRACE")
     (options, arguments) = parser.parse_args()
     if (options.tasks_file is None):
         print(parser.usage)

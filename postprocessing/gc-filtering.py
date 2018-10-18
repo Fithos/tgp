@@ -4,25 +4,13 @@ from optparse import OptionParser
 import sys
 import csv
 
-'''
-Documentation:
+helper = '''Usage: ./gc-filtering.py -c <path to CS trace> -p <path to CPU trace> -g <path to GC trace> [--outcs <path to filtered CS trace (output)> --outcpu <path to filtered CPU trace (output)>]
     
 This script filters the CS and the CPU traces, eliminating measurements obtained during GC cycles.
 
-
 The script produces two new traces (named 'filtered-cs.csv' and 'filtered-cpu.csv' by default), containing the filtered CS and CPU measurements, respectively.
 
-Usage: ./gc-filtering.py --cs <path to CS trace> --cpu <path to CPU trace> --gc <path to GC trace> [--outcs <path to filtered CS trace> --outcpu <path to filtered CPU trace>]
-
-Parameters:
--> --cs: path to the CS trace to be filtered
--> --cpu:  path to the CPU trace to be filtered
--> --gc: path to the GC trace. Filtering of CS and CPU measurements are be based on data contained in this trace
 Note: All input traces should have been produced by tgp with a SINGLE profiling run, either in the bytecode profiling or reference-cycles profiling mode.
-
-Optional parameters:
--> --outcs: the path to the output trace containing the filtered context switches. If none is provided, then the output trace will be produced in './filtered-cs.csv'
--> --outcpu: the path to the output trace containing the filtered CPU utilization measurements. If none is provided, then the output trace will be produced in './filtered-cpu.csv'
 '''
 
 #Default name of the output filtered CS trace
@@ -183,10 +171,10 @@ def write_cpu_csv():
 
 if __name__ == "__main__":
     #Flags parser
-    parser = OptionParser("Usage: ./gc-filtering.py -cs <path to CS trace> -cpu <path to CPU trace> -gc <path to GC trace> [-outcs <path to filtered CS trace (output)> -outcpu <path to filtered CPU trace (output)>]")
-    parser.add_option('--cs', dest='cs_file', type='string', help="path to the CS trace to be filtered", metavar="CS_TRACE")
-    parser.add_option('--cpu', dest='cpu_file', type='string', help="path to the CPU trace to be filtered", metavar="CPU_TRACE")
-    parser.add_option('--gc', dest='gc_file', type='string', help="path to the GC trace. Filtering of CS and CPU measurements are be based on data contained in this trace", metavar="GC_TRACE")
+    parser = OptionParser(helper)
+    parser.add_option('-c','--context-switches', dest='cs_file', type='string', help="path to the CS trace to be filtered", metavar="CS_TRACE")
+    parser.add_option('-p', '--cpu', dest='cpu_file', type='string', help="path to the CPU trace to be filtered", metavar="CPU_TRACE")
+    parser.add_option('-g','--garbage-collector', dest='gc_file', type='string', help="path to the GC trace. Filtering of CS and CPU measurements are be based on data contained in this trace", metavar="GC_TRACE")
     parser.add_option('--outcs', dest='out_cs_file', type='string', help="path to the output trace containing the filtered context switches. If none is provided, then the output trace will be produced in './filtered-cs.csv'", metavar="FILTERED_CS_TRACE")
     parser.add_option('--outcpu', dest='out_cpu_file', type='string', help="path to the output trace containing the filtered CPU utilization measurements. If none is provided, then the output trace will be produced in './filtered-cpu.csv'", metavar="FILTERED_CPU_TRACE")
     (options, arguments) = parser.parse_args()

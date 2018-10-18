@@ -1,30 +1,21 @@
 #!/usr/bin/python
 
-'''
-This scripts performs basic statistical analysis on task granularity, based on the input task, CS, and CPU traces.
-The analysis focuses on the average granularity of executed tasks, its distribution, and its closedness to a specific granularity value. The analysis also computes the average number of context switches and CPU utilization experienced during task execution.
-
-The results are both printed to stardard output and written in a new trace (named 'diagnostics.csv' by default).
-
-Usage: ./diagnose.py -t <path to task trace> --cs <path to CS trace> --cpu <path to CPU trace> [--sc <class name> --cg <centre granularity> -o <path to result trace (output)>]
-
-Parameters:
--> -t: path to the task trace containing data to be analyzed
--> --cs: path to the CS trace containing data to be analyzed
--> --cpu: path to the CPU trace containing data to be analyzed
-Note: All input traces should have been produced by tgp with a SINGLE profiling run, either in the bytecode profiling or reference-cycles profiling mode.
-
-Optional parameters:
--> --sc: a specific class on which to focus the analysis. For example, if '--sc ExampleClass' is passed, then all statistics will refer only to tasks of class 'ExampleClass', ignoring all other tasks. If the script should analyze all tasks, then this parameter should not be set (or should be set to 'null', which is the default value).
--> --cg: specifies the 'centre granularity'. The script computes the percentage of tasks whose granularity has the same order as the centre granularity. Setting this parameter allows users to change the centre granularity (which is 10^5 by default).
--> -o: the path to the output trace containing the results. If none is provided, then the output trace will be produced in './diagnostics.csv'
-'''
-
 from __future__ import division
 from optparse import OptionParser
 import sys
 import csv
 import math
+
+helper = '''Usage: ./diagnose.py -t <path to task trace> -c <path to CS trace> -p <path to CPU trace> [-s <class name> -g <centre granularity> -o <path to result trace (output)>]
+        
+This scripts performs basic statistical analysis on task granularity, based on the input task, CS, and CPU traces. The analysis focuses on the average granularity of executed tasks, its distribution, and its closedness to a specific granularity value. The analysis also computes the average number of context switches and CPU utilization experienced during task execution.
+        
+The results are both printed to stardard output and written in a new trace (named 'diagnostics.csv' by default).
+        
+Note: All input traces should have been produced by tgp with a SINGLE profiling run, either in the bytecode profiling or reference-cycles profiling mode.
+'''
+
+
 
 #By default, the analysis does not focus on any class.
 DEFAULT_SPECIFIC_CLASS = "null"
@@ -371,13 +362,13 @@ def write_stats():
 
 if __name__ == "__main__":
     #Flags parser
-    parser = OptionParser("./diagnose.py -t <path to task trace> --cs <path to CS trace> --cpu <path to CPU trace> [--sc <class name> --cg <centre granularity> -o <path to result trace (output)>]")
-    parser.add_option('-t', dest='tasks_file', type='string', help="path to the task trace containing data to be analyzed", metavar="TASK_TRACE")
-    parser.add_option('--cs', dest='cs_file', type='string', help="path to the CS trace containing data to be analyzed", metavar="CS_TRACE")
-    parser.add_option('--cpu', dest='cpu_file', type='string', help="path to the CPU trace containing data to be analyzed", metavar="CPU_TRACE")
-    parser.add_option('--sc', dest='specific_class', type='string', help="a specific class on which to focus the analysis. For example, if '--sc ExampleClass' is passed, then all statistics will refer only to tasks of class 'ExampleClass', ignoring all other tasks. If the script should analyze all tasks, then this parameter should not be set (or should be set to 'null', which is the default value)", metavar="CLASS")
-    parser.add_option('--cg', dest='gran_centre', type='long', help="specifies the 'centre granularity'. The script computes the percentage of tasks whose granularity has the same order as the centre granularity. Setting this parameter allows users to change the centre granularity (which is 10^5 by default).", metavar="CENTRE_GRAN")
-    parser.add_option('-o', dest='output_file', type='string', help="the path to the output trace containing the results. If none is provided, then the output trace will be produced in './diagnostics.csv'", metavar="RESULT_TRACE")
+    parser = OptionParser(helper)
+    parser.add_option('-t', '--task', dest='tasks_file', type='string', help="path to the task trace containing data to be analyzed", metavar="TASK_TRACE")
+    parser.add_option('-c', '--context-switches', dest='cs_file', type='string', help="path to the CS trace containing data to be analyzed", metavar="CS_TRACE")
+    parser.add_option('-p', '--cpu', dest='cpu_file', type='string', help="path to the CPU trace containing data to be analyzed", metavar="CPU_TRACE")
+    parser.add_option('-s', '--specific-class', dest='specific_class', type='string', help="a specific class on which to focus the analysis. For example, if '--sc ExampleClass' is passed, then all statistics will refer only to tasks of class 'ExampleClass', ignoring all other tasks. If the script should analyze all tasks, then this parameter should not be set (or should be set to 'null', which is the default value)", metavar="CLASS")
+    parser.add_option('-g','--centre-granularity', dest='gran_centre', type='long', help="specifies the 'centre granularity'. The script computes the percentage of tasks whose granularity has the same order as the centre granularity. Setting this parameter allows users to change the centre granularity (which is 10^5 by default).", metavar="CENTRE_GRAN")
+    parser.add_option('-o', '--output', dest='output_file', type='string', help="the path to the output trace containing the results. If none is provided, then the output trace will be produced in './diagnostics.csv'", metavar="RESULT_TRACE")
     (options, arguments) = parser.parse_args()
     if (options.tasks_file is None):
         print(parser.usage)

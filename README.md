@@ -329,7 +329,7 @@ ID,Class,Outer Task ID,Execution N.,Creation thread ID,Creation thread class,Cre
 
 Following the rules of task aggregation, 15 tasks out of 16 are aggregated, resulting in a single entry in the aggregated task trace.  
 
-**Note:** more details on the script and its parameters can be found in *post-processing/aggregation.py*, in the documentation section. Alternatively, run  `./aggregation.py -h`.
+**Note:** more details on the script and its parameters can be obtained by running  `./aggregation.py -h`.
 
 #### Garbage-collection Filtering
 
@@ -338,7 +338,7 @@ It is possible that the CPU and CS measurements are taken during a garbage colle
 To perform the filtering, enter the *postprocessing/* directory and type the following command:
 
 ```
-./gc-filtering.py --cs <path to CS trace> --cpu <path to CPU trace> --gc <path to GC trace> [--outcs <path to filtered CS trace (output)> --outcpu <path to filtered CPU trace (output)>]
+./gc-filtering.py -c <path to CS trace> -p <path to CPU trace> -g <path to GC trace> [--outcs <path to filtered CS trace (output)> --outcpu <path to filtered CPU trace (output)>]
 ```
 
 The script creates two new traces (named *filtered-cs.csv* and *filtered-cpu.csv* by default) containing the filtered CS and CPU utilization measurements, respectively.
@@ -348,7 +348,7 @@ The directory *postprocessing/tests-gc-filtering/* contains several test traces 
 As an example, running the script on the test traces *cs.csv*, *cpu_in_cs.csv*, and *gc_in_cs.csv* as following:
 
 ```
-./gc-filtering.py --cs tests-gc-filtering/cs.csv --cpu tests-gc-filtering/cpu_in_cs.csv --gc tests-gc-filtering/gc_in_cs.csv
+./gc-filtering.py --c tests-gc-filtering/cs.csv -p tests-gc-filtering/cpu_in_cs.csv -g tests-gc-filtering/gc_in_cs.csv
 ```
 
 yields the following result (traces):
@@ -377,7 +377,7 @@ Timestamp (ns),CPU utilization (user),CPU utilization (system)
 
 This script filters out all context switches and all CPU measurements whose timestamp falls within GC cycles, resulting in only 7 (out of 22) and 5 (out of 24) entries in the filtered CS and CPU trace, respectively. 
 
-**Note:** more details on the script and its parameters can be found in post-processing/gc-filtering.py, in the documentation section. Alternatively, run `./gc-filtering.py -h`.
+**Note:** more details on the script and its parameters can be obtained by running `./gc-filtering.py -h`.
 
 ### Characterization
 
@@ -398,7 +398,7 @@ This script provides basic statistics on task granularity and the average number
 To perform diagnostics on tasks, enter the *characterization/* folder and type the following command:
 
 ```
-./diagnose.py -t <path to task trace> --cs <path to CS trace> --cpu <path to CPU trace> [-o <path to result trace (output)>]
+./diagnose.py -t <path to task trace> -c <path to CS trace> -p <path to CPU trace> [-o <path to result trace (output)>]
 ```
 
 The script creates a new trace (named *diagnostics.csv* by default) containing the described statistics. The results of the analysis will also be printed on the standard output.
@@ -406,7 +406,7 @@ The script creates a new trace (named *diagnostics.csv* by default) containing t
 As an example, running the script as following:
 
 ```
-./diagnose.py -t tests/test-tasks.csv --cs tests/test-cs.csv --cpu tests/test-cpu.csv
+./diagnose.py -t tests/test-tasks.csv -c tests/test-cs.csv -p tests/test-cpu.csv
 ```
 
 yields the following result (stdout):
@@ -432,7 +432,7 @@ CPU STATISTICS
 -> Average CPU utilization: 40.8868421053+-4.49185598114
 ```
 
-**Note:** more details on the script and its parameters (including those not shown here) can be found in *characterization/diagnose.py*, in the documentation section. Alternatively, run `./diagnose.py -h`.
+**Note:** more details on the script and its parameters (including those not shown here) can be obtained by running `./diagnose.py -h`.
 
 #### Fine-grained Tasks
 
@@ -442,7 +442,7 @@ For each such class, the script reports the average granularity of all tasks bel
 To run this script, enter the *characterization/* folder and type the following command:
 
 ```
-./fine_grained.py -t <path to task trace> --cs <path to CS trace> [-o <path to results trace>]
+./fine_grained.py -t <path to task trace> -c <path to CS trace> [-o <path to result trace (output)>]
 ```
 
 The script creates a new trace (named *fine-grained.csv* by default). The results of the analysis will also be printed on the standard output.
@@ -450,7 +450,7 @@ The script creates a new trace (named *fine-grained.csv* by default). The result
 As an example, running the script as following:
 
 ```
-./fine_grained.py -t tests/test-tasks.csv --cs tests/test-cs.csv
+./fine_grained.py -t tests/test-tasks.csv -c tests/test-cs.csv
 ```
 
 yields the following result (stdout): 
@@ -467,7 +467,7 @@ Class: class3 -> Average granularity: 695149.666667 -> Average number of context
 Class: class1 -> Average granularity: 3860539.66667 -> Average number of context switches: 137.076923077cs/100ms
 ```
 
-**Note:** more details on the script and its parameters (including those not shown here) can be found in *characterization/fine_grained.py*, in the documentation section. Alternatively, run  `./fine_grained.py -h`.
+**Note:** more details on the script and its parameters (including those not shown here) can be obtained by running `./fine_grained.py -h`.
 
 #### Coarse-grained Tasks
 
