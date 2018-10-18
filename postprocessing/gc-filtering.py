@@ -15,9 +15,9 @@ The script produces two new traces (named 'filtered-cs.csv' and 'filtered-cpu.cs
 Usage: ./gc-filtering.py --cs <path to CS trace> --cpu <path to CPU trace> --gc <path to GC trace> [--outcs <path to filtered CS trace> --outcpu <path to filtered CPU trace>]
 
 Parameters:
--> --cs: the path to the CS trace to be filtered
--> --cpu: the path to the CPU trace to be filtered
--> --gc: the path to the GC trace. Filtering of CS and CPU measurements are be based on data contained in this trace
+-> --cs: path to the CS trace to be filtered
+-> --cpu:  path to the CPU trace to be filtered
+-> --gc: path to the GC trace. Filtering of CS and CPU measurements are be based on data contained in this trace
 Note: All input traces should have been produced by tgp with a SINGLE profiling run, either in the bytecode profiling or reference-cycles profiling mode.
 
 Optional parameters:
@@ -105,7 +105,7 @@ def read_csv(input_csv_file, target_array, data_type, file_delimiter):
             if data_type == "CS" and csv_line_counter > 1:
                 if len(row) != FIELDS_CS:
                     print("Wrong CS trace format")
-                    exit(0)
+                    exit(-1)
                 if row[0][0] != "-" and row[1][0] != "-" and contains_letters(row[0]) == False and contains_letters(row[1]) == False:
                     new_cs = CSData(float(row[0]), float(row[1]))
                     cs_data_array_bf.append(new_cs)
@@ -113,7 +113,7 @@ def read_csv(input_csv_file, target_array, data_type, file_delimiter):
             elif data_type == "CPU" and csv_line_counter != 0:
                 if len(row) != FIELDS_CPU:
                     print("Wrong CPU trace format")
-                    exit(0)
+                    exit(-1)
                 if len(row[0]) > 0 and len(row[1]) > 0 and len(row[2]) > 0 and row[0][0] != "-" and row[1][0] != "-" and row[2][0] != "-" and contains_letters(row[0]) == False and contains_letters(row[1]) == False and contains_letters(row[2]) == False:
                     new_cpu = CPUData(long(row[0]), float(row[1]), float(row[2]))
                     cpu_data_array_bf.append(new_cpu)
@@ -121,7 +121,7 @@ def read_csv(input_csv_file, target_array, data_type, file_delimiter):
             elif data_type == "GC":
                 if len(row) != FIELDS_GC:
                     print("Wrong GC trace format")
-                    exit(0)
+                    exit(-1)
                 if gc_counter == 1:
                     if old_gc[0] != "-" and row[1][0] != "-" and contains_letters(old_gc) == False and contains_letters(row[1]) == False:
                         new_gc = GCData(long(old_gc), long(row[1]))

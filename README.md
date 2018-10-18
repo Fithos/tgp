@@ -393,12 +393,12 @@ Directory *characterization/tests/* contains test traces for all characterizatio
 
 #### Diagnosis
 
-This script provides basic statistics on task granularity and the average number of context switches and CPU utilization. The script also offers the possibility to restrict this analysis on tasks belonging to a specific class (by providing the name of the class via the flag --sc).
+This script provides basic statistics on task granularity and the average number of context switches and CPU utilization. The script also offers the possibility to restrict this analysis on tasks belonging to a specific class.
 
 To perform diagnostics on tasks, enter the *characterization/* folder and type the following command:
 
 ```
-./diagnose.py -t <path to task trace> --cs <path to CS trace> --cpu <path to CPU trace> [--sc <class name> -o <path to results trace>]
+./diagnose.py -t <path to task trace> --cs <path to CS trace> --cpu <path to CPU trace> [-o <path to result trace (output)>]
 ```
 
 The script creates a new trace (named *diagnostics.csv* by default) containing the described statistics. The results of the analysis will also be printed on the standard output.
@@ -406,7 +406,7 @@ The script creates a new trace (named *diagnostics.csv* by default) containing t
 As an example, running the script as following:
 
 ```
-./diagnose.py -t tests/test-tasks.csv --cs tests/test-cs.csv --cpu tests/test-cpu.csv --cg 100000
+./diagnose.py -t tests/test-tasks.csv --cs tests/test-cs.csv --cpu tests/test-cpu.csv
 ```
 
 yields the following result (stdout):
@@ -425,8 +425,8 @@ TASKS STATISTICS
 -> Percentage of tasks having granularity within whiskers range: 79.3103448276%
 -> Percentage of tasks with granularity around 100000: 37.9310344828%
 
-CONTEXT SWITCHES STATISTICS
--> Average context switches: 141.567567568cs/100ms
+CONTEXT-SWITCHES STATISTICS
+-> Average number of context switches: 141.567567568cs/100ms
 
 CPU STATISTICS
 -> Average CPU utilization: 40.8868421053+-4.49185598114

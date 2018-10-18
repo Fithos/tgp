@@ -153,7 +153,7 @@ def read_csv():
         for row in csv_reader:
             if len(row) != FIELDS_LEN:
                 print("Wrong task trace format")
-                exit(0)
+                exit(-1)
             if csv_line_counter != 0:
                 this_id = row[0]
                 if contains_letters(this_id):

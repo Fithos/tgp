@@ -1,22 +1,23 @@
 #!/usr/bin/python
 
 '''
-This program performs statistical analysis based on input files containing data on tasks, context-switches, and CPU utilization.
-In particular, the analysis focuses on the average granularity of spawned tasks, their distribution, and their closedness to a specific granularity value. The analysis also computes the average of context-switches (during tasks execution) and CPU utilization (during tasks execution), providing for the latter an interval of confidence of 95%.
+This scripts performs basic statistical analysis on task granularity, based on the input task, CS, and CPU traces.
+The analysis focuses on the average granularity of executed tasks, its distribution, and its closedness to a specific granularity value. The analysis also computes the average number of context switches and CPU utilization experienced during task execution.
 
-The results are both printed on the stardard output and written on a new trace (named 'diagnostics.csv' by default).
+The results are both printed to stardard output and written in a new trace (named 'diagnostics.csv' by default).
 
-Usage: ./diagnose.py -t <path to tasks trace> --cs <path to context switches trace> --cpu <path to CPU trace> [--sc <class name> --cg <centre granularity> -o <path to results trace>]
+Usage: ./diagnose.py -t <path to task trace> --cs <path to CS trace> --cpu <path to CPU trace> [--sc <class name> --cg <centre granularity> -o <path to result trace (output)>]
 
 Parameters:
--> -t: the task trace
--> --cs: the context switches trace
--> --cpu: the CPU measurements trace
-Note: files 'path/to/task trace, 'path/to/context switches trace', and 'path/to/CPU trace' should be produced by the same profiling run.
+-> -t: path to the task trace containing data to be analyzed
+-> --cs: path to the CS trace containing data to be analyzed
+-> --cpu: path to the CPU trace containing data to be analyzed
+Note: All input traces should have been produced by tgp with a SINGLE profiling run, either in the bytecode profiling or reference-cycles profiling mode.
+
 Optional parameters:
--> --sc: a specific class on which to focus the analysis. For example, if 'specific_class' is 'ExampleClass', then all statistics will be referred to tasks belonging to 'ExampleClass', and ignoring the rest. If no specific class is to be focused on, then this value should be set to 'null'. By default, the tool does not focus on any specific class
--> --cg: is used to compute the percentage of tasks whose granularity has the same order as the specified one. By default, this granularity is 0
--> -o: the name of the output trace that will be produced. If none is provided, then the output trace will be named 'diagnostics.csv'
+-> --sc: a specific class on which to focus the analysis. For example, if '--sc ExampleClass' is passed, then all statistics will refer only to tasks of class 'ExampleClass', ignoring all other tasks. If the script should analyze all tasks, then this parameter should not be set (or should be set to 'null', which is the default value).
+-> --cg: specifies the 'centre granularity'. The script computes the percentage of tasks whose granularity has the same order as the centre granularity. Setting this parameter allows users to change the centre granularity (which is 10^5 by default).
+-> -o: the path to the output trace containing the results. If none is provided, then the output trace will be produced in './diagnostics.csv'
 '''
 
 from __future__ import division
@@ -28,33 +29,33 @@ import math
 #By default, the analysis does not focus on any class.
 DEFAULT_SPECIFIC_CLASS = "null"
 #Default centre granularity
-DEFAULT_CENTRE_GRAN = 0
-#The default name of the output file
+DEFAULT_CENTRE_GRAN = 100000
+#The default name of the output result file
 DEFAULT_OUT_FILE = "diagnostics.csv"
 
-#Number of fields of tasks file
+#Number of columns in the task trace
 FIELDS_TASKS = 22
-#Number of fields of the context-switches file
+#Number of columns in the CS trace
 FIELDS_CS = 2
-#Number of fields of the CPU file
+#Number of columns in the CPU trace
 FIELDS_CPU = 3
 
-#The z-score corresponding to confidence of 0.95. It is used to compute the confidence interval of the CPU average
+#The z-score corresponding to a confidence of 0.95. It is used to compute the confidence interval of the average CPU utilization
 Z_SCORE = 1.96
 
-#An array containing instances of Task objects
+#A list containing Task objects
 tasks = []
 
-#An array containing instances of ContextSwitch objects
+#A list containing ContextSwitch objects
 contextswitches = []
 
-#An array containing instances of CPU objects
+#A list containing CPU objects
 cpus = []
 
-#An array containing all granularity values
+#A list containing all granularity values
 grans = []
 
-#The total granularity of all spawned (valid) tasks
+#The total granularity of all executed (valid) tasks
 total_grans = 0
 
 #The number of total executed tasks
@@ -62,7 +63,7 @@ exec_tasks = 0
 
 class Task:
     '''
-    A class containing some of the data from the csv file for tasks.
+    A class containing relevant data taken from the task trace.
     '''
     def __init__(self, this_id, this_class, this_entry, this_exit, this_gran):
         self.this_id = this_id
@@ -73,7 +74,7 @@ class Task:
 
 class ContextSwitch:
     '''
-    A class containing the data from the csv file for context-switches.
+    A class containing data taken from the CS trace.
     '''
     def __init__(self, this_time, this_cs):
         self.this_time = this_time
@@ -81,7 +82,7 @@ class ContextSwitch:
 
 class CPU:
     '''
-    A class containing the data from the csv file for CPU.
+    A class containing data taken from the CPU trace.
     '''
     def __init__(self, this_time, this_usr, this_sys):
         self.this_time = this_time
@@ -90,9 +91,9 @@ class CPU:
 
 def contains_letters(string):
     '''
-    Checks whether the specified string contains letters.
-    string: the string on which to perform the check.
-    Returns true if the specified string contains letters, false otherwise.
+    Checks whether the input string contains letters.
+    string: the string on which to check the presence of letters.
+    Returns true if the string contains letters, false otherwise.
     '''
     for s in string:
         if s.isalpha():
@@ -101,8 +102,8 @@ def contains_letters(string):
 
 def read_tasks():
     '''
-    Reads the csv file for tasks. For each valid task, i.e., it is executed, it creates a new instance of Task and inserts it into the tasks array.
-    Note that if the parameter 'specific_class' has a valid value, then only tasks which have been executed and have class equal to 'specific_class' are considered.
+    Reads the task trace. For each executed task, create a new instance of Task and inserts it into the task list.
+    Note that if the parameter 'specific_class' has a non-null value, then only tasks which have been executed and have class equal to 'specific_class' are considered.
     '''
     linecounter = 0
     with open(tasks_file) as csvfile:
@@ -110,7 +111,7 @@ def read_tasks():
         for row in csvreader:
             if len(row) != FIELDS_TASKS:
                 print("Wrong task trace format")
-                exit(0)
+                exit(-1)
             if linecounter > 0:
                 if contains_letters(row[0]):
                     continue
@@ -128,30 +129,31 @@ def read_tasks():
                 #Checks that task has been executed
                 if this_entry >= 0 and this_exit >= 0:
                     global exec_tasks
-                    exec_tasks += 1
                     if specific_class != "null":
                         if this_class == specific_class:
                             tasks.append(Task(this_id, this_class, this_entry, this_exit, this_gran))
                             global total_grans
                             total_grans += this_gran
                             grans.append(this_gran)
+                            exec_tasks += 1
                     else:
                         tasks.append(Task(this_id, this_class, this_entry, this_exit, this_gran))
                         global total_grans
                         total_grans += this_gran
                         grans.append(this_gran)
+                        exec_tasks += 1
             linecounter += 1
 
 def read_cs():
     '''
-    Reads the csv file for context-switches and for each measurement which has taken place during the execution of a task, it creates a new ContextSwitch instance and inserts it into the contextswitches array.
+    Reads the CS trace. For each measurement which occurred during the execution of a task, create a new ContextSwitch instance and inserts it into the contextswitches list.
     '''
     with open(cs_file) as csvfile:
         csvreader = csv.reader(csvfile)
         for row in csvreader:
             if len(row) != FIELDS_CS:
-                print("Wrong context switches trace format")
-                exit(0)
+                print("Wrong CS trace format")
+                exit(-1)
             if contains_letters(row[0]):
                 continue
             this_time = float(row[0])
@@ -165,14 +167,14 @@ def read_cs():
                     break
 def read_cpu():
     '''
-    Reads the csv file for CPU and for each measurement which has taken place during the execution of a task, it creates a new CPU instance and inserts it into the cpus array.
+    Reads the CPU trace. For each measurement which occurred during the execution of a task, create a new CPU instance and inserts it into the cpus list.
     '''
     with open(cpu_file) as csvfile:
         csvreader = csv.reader(csvfile)
         for row in csvreader:
             if len(row) != FIELDS_CPU:
                 print("Wrong CPU trace format")
-                exit(0)
+                exit(-1)
             if contains_letters(row[0]):
                 continue
             this_time = long(row[0])
@@ -203,8 +205,7 @@ def gran_percentage_in_range(low_w, high_w):
 
 def in_specified_range():
     '''
-    Computes the number of tasks with granularity having the same order of magnitude as the specified granularity.
-    Returns the number of tasks satifying said property.
+    Computes the number of tasks with granularity having the same order of magnitude as gran_centre.
     '''
     count = 0
     for task in tasks:
@@ -215,7 +216,7 @@ def in_specified_range():
 def tasks_statistics():
    '''
    Computes basic statistics related to tasks.
-   Returns a dictionary containing these tasks statistics.
+   Returns a dictionary containing such statistics.
    '''
    print("")
    print("TASKS STATISTICS")
@@ -249,46 +250,46 @@ def tasks_statistics():
        percentage_range = gran_percentage_in_range(low_w, high_w)
        avg = total_grans/len(tasks)
        percentage = (in_specified_range()/len(tasks))*100
-   res = "-> Total number of tasks: " + str(exec_tasks) + " \n-> Average granularity: " + str(avg) + " \n-> One percentile granularity: " + str(one_percentile) + " \n-> Five percentile granularity: " + str(five_percentile) + " \n-> Fifty percentage (median) granularity: " + str(median) + " \n-> Ninety-five percentile granularity: " + str(ninetyfive_percentile) + " \n-> Ninety-nine percentile granularity: " + str(ninetynine_percentile) + " \n-> IQC: " + str(inter_quartile) + " \n-> Whiskers range: [" + str(low_w) + ", " + str(high_w) + "] \n-> Percentage of tasks having granularity within whiskers range: " + str(percentage_range) + "% \n-> Percentage of tasks with granularity around " + str(gran_centre) + ": " + str(percentage) + "%"
+   res = "-> Total number of tasks: " + str(exec_tasks) + " \n-> Average granularity: " + str(avg) + " \n-> 1st percentile - granularity: " + str(one_percentile) + " \n-> 5th percentile - granularity: " + str(five_percentile) + " \n-> 50th percentile (median) - granularity: " + str(median) + " \n-> 95th percentile - granularity: " + str(ninetyfive_percentile) + " \n-> 99th percentile - granularity: " + str(ninetynine_percentile) + " \n-> IQC - granularity: " + str(inter_quartile) + " \n-> Whiskers range - granularity: [" + str(low_w) + ", " + str(high_w) + "] \n-> Percentage of tasks having granularity within whiskers range: " + str(percentage_range) + "% \n-> Percentage of tasks with granularity around " + str(gran_centre) + ": " + str(percentage) + "%"
    print(res)
    res_dict = {}
    res_dict["Total number of tasks"] = str(exec_tasks)
    res_dict["Average granularity"] = str(avg)
-   res_dict["One percentile granularity"] = str(one_percentile)
-   res_dict["Five percentile granularity"] = str(five_percentile)
-   res_dict["Fifty percentage (median) granularity"] = str(median)
-   res_dict["Ninety-five percentile granularity"] = str(ninetyfive_percentile)
-   res_dict["Ninety-nine percentile granularity"] = str(ninetynine_percentile)
-   res_dict["IQC"] = str(inter_quartile)
-   res_dict["Whiskers range"] = "[" + str(low_w) + ", " + str(high_w) + "]"
-   res_dict["Percentage of tasks having granularity within whiskers range"] = str(percentage_range) + "%"
-   res_dict["Percentage of tasks with granularity around " + str(gran_centre) + ": "] = str(percentage) + "%"
+   res_dict["1st percentile - granularity"] = str(one_percentile)
+   res_dict["5th percentile - granularity"] = str(five_percentile)
+   res_dict["50th percentile (median) - granularity"] = str(median)
+   res_dict["95th percentile - granularity"] = str(ninetyfive_percentile)
+   res_dict["99th percentile - granularity"] = str(ninetynine_percentile)
+   res_dict["IQC - granularity"] = str(inter_quartile)
+   res_dict["Lower whiskers range - granularity"] = str(low_w)
+   res_dict["Upper whiskers range - granularity"] = str(high_w)
+   res_dict["Percentage of tasks having granularity within whiskers range"] = str(percentage_range)
+   res_dict["Centre granularity"] = str(gran_centre)
+   res_dict["Percentage of tasks with granularity around centre granularity"] = str(percentage)
    return res_dict
 
 def cs_statistics():
     '''
     Computes statistics related to context-switches.
-    In particular it computes the average number of context-switches.
-    Returns a dictionary containing these context-switches statistics.
+    Returns a dictionary containing such statistics.
     '''
     print("")
-    print("CONTEXT SWITCHES STATISTICS")
+    print("CONTEXT-SWITCHES STATISTICS")
     total_cs = 0
     for cs in contextswitches:
         total_cs += cs.this_cs
     avg = 0
     if len(contextswitches) > 0:
         avg = total_cs/len(contextswitches)
-    res = "-> Average context switches: " + str(avg) + "cs/100ms"
+    res = "-> Average number of context switches: " + str(avg) + "cs/100ms"
     print(res)
     res_dict = {}
-    res_dict["Average context switches"] = str(avg) + "cs/100ms"
+    res_dict["Average number of context switches"] = str(avg)
     return res_dict
 
 def cpu_mean():
     '''
-    Computes the average CPU utilization, considering both user and kernel components.
-    Returns the average CPU utilization.
+    Computes the average CPU utilization.
     '''
     mean = 0
     if len(cpus) == 0:
@@ -300,8 +301,7 @@ def cpu_mean():
 
 def cpu_standard_deviation():
     '''
-    Computes the standard deviation for the average CPU utilization.
-    Returns the standard deviation for the average CPU utilization.
+    Computes the standard deviation of the average CPU utilization.
     '''
     sd = 0
     if len(cpus) == 0:
@@ -315,8 +315,7 @@ def cpu_standard_deviation():
 
 def cpu_confidence_interval():
     '''
-    Computes the confidence interval for the average CPU utilization.
-    Returns the confidence interval for the average CPU utilization.
+    Computes the confidence intervals of the average CPU utilization.
     '''
     mean = cpu_mean()
     sd = cpu_standard_deviation()
@@ -327,8 +326,7 @@ def cpu_confidence_interval():
 def cpu_statistics():
     '''
     Computes statistics related to CPU utilization.
-    In particular, it computes the average CPU utilization and the confidence interval for it.
-    Returns a dictionary containing these CPU statistics.
+    Returns a dictionary containing such statistics.
     '''
     print("")
     mean = cpu_mean()
@@ -338,12 +336,14 @@ def cpu_statistics():
     print(res)
     print("")
     res_dict = {}
-    res_dict["Average CPU utilization"] = str(mean) + "+-" + str(interval)
+    res_dict["Average CPU utilization"] = str(mean)
+    res_dict["STD CPU utilization"] = str(interval)
+    
     return res_dict
 
 def write_stats():
     '''
-    Writes the results of statistics for tasks, context-switches, and CPU utilization on a csv file named 'diagnostics.csv'.
+    Writes statistics for tasks, context switches, and CPU utilization on a csv file.
     '''
     tasks_stats = tasks_statistics()
     cs_stats = cs_statistics()
@@ -360,10 +360,7 @@ def write_stats():
         writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
         writer.writeheader()
         content = {}
-        if specific_class != "null":
-            content["Selected class"] = specific_class
-        else:
-            content["Selected class"] = "no class selected"
+        content["Selected class"] = specific_class
         for key in tasks_stats:
             content[key] = tasks_stats[key]
         for key in cs_stats:
@@ -374,13 +371,13 @@ def write_stats():
 
 if __name__ == "__main__":
     #Flags parser
-    parser = OptionParser('usage: -t <path to tasks trace> --cs <path to context switches trace> --cpu <path to CPU trace> [--sc <class name> --cg <centre granularity> -o <path to results trace>]')
-    parser.add_option('-t', dest='tasks_file', type='string', help="the task trace")
-    parser.add_option('--cs', dest='cs_file', type='string', help="the containing context switches trace")
-    parser.add_option('--cpu', dest='cpu_file', type='string', help="the CPU trace")
-    parser.add_option('--sc', dest='specific_class', type='string', help="a specific class on which to focus the analysis. For example, if 'specific_class' is 'ExampleClass', then all statistics will be referred to tasks belonging to 'ExampleClass', and ignoring th    e rest. If no specific class is to be focused on, then this value should be set to 'null'. By default, the tool does not focus on any specific class")
-    parser.add_option('--cg', dest='gran_centre', type='long', help="is used to compute the percentage of tasks whose granularity has the same order as the specified one. By default, this granularity is 0")
-    parser.add_option('-o', dest='output_file', type='string', help="the name of the trace that will be produced. If none is provided, then the trace will be named 'diagnostics.csv'")
+    parser = OptionParser("./diagnose.py -t <path to task trace> --cs <path to CS trace> --cpu <path to CPU trace> [--sc <class name> --cg <centre granularity> -o <path to result trace (output)>]")
+    parser.add_option('-t', dest='tasks_file', type='string', help="path to the task trace containing data to be analyzed", metavar="TASK_TRACE")
+    parser.add_option('--cs', dest='cs_file', type='string', help="path to the CS trace containing data to be analyzed", metavar="CS_TRACE")
+    parser.add_option('--cpu', dest='cpu_file', type='string', help="path to the CPU trace containing data to be analyzed", metavar="CPU_TRACE")
+    parser.add_option('--sc', dest='specific_class', type='string', help="a specific class on which to focus the analysis. For example, if '--sc ExampleClass' is passed, then all statistics will refer only to tasks of class 'ExampleClass', ignoring all other tasks. If the script should analyze all tasks, then this parameter should not be set (or should be set to 'null', which is the default value)", metavar="CLASS")
+    parser.add_option('--cg', dest='gran_centre', type='long', help="specifies the 'centre granularity'. The script computes the percentage of tasks whose granularity has the same order as the centre granularity. Setting this parameter allows users to change the centre granularity (which is 10^5 by default).", metavar="CENTRE_GRAN")
+    parser.add_option('-o', dest='output_file', type='string', help="the path to the output trace containing the results. If none is provided, then the output trace will be produced in './diagnostics.csv'", metavar="RESULT_TRACE")
     (options, arguments) = parser.parse_args()
     if (options.tasks_file is None):
         print(parser.usage)
@@ -411,7 +408,12 @@ if __name__ == "__main__":
         output_file = options.output_file
 
     print("")
-    print("Beginning diagnose...")
+    print("Beginning diagnosis...")
+    print("")
+
+    if (specific_class != "null") :
+        print("Restricting analysis to tasks of class: " + specific_class)
+        print ("")
 
     read_tasks()
 
@@ -420,3 +422,5 @@ if __name__ == "__main__":
     read_cpu()
 
     write_stats()
+
+
