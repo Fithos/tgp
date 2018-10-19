@@ -286,7 +286,7 @@ The first column represents the event profiled (i.e., the start or the end of a 
 
 ## Post-processing and Characterization
 
-This release comes with scripts to further process the traces produced by *tgp*. These scripts are of two types: the first syntactically filters data and removes garbage, while the second helps the user performing task-granularity analysis.
+This release comes with scripts to further process the traces produced by *tgp*. These scripts are of two types: 1) *post-processing*, which syntactically filter data and remove garbage, and 2) *characterization*, which help the user performing task-granularity analysis.
 
 ### Post-processing
 
@@ -312,9 +312,7 @@ To perform tasks aggregation on a task trace, enter the *postprocessing/* folder
 
 The script creates a new trace, called *aggregated task trace* (named *aggregated-tasks.csv* by default) containing the task trace after the aggregation step.
 
-The directory *postprocessing/tests-aggregation/* contains several test traces for the aggregation tool: documentation on them can be found in *postprocessing/tests-aggregation/documentation.txt*.
-
-As an example, running the script with test *test_valid_chain.csv* as following:
+The directory *postprocessing/tests-aggregation/* contains several test traces for the aggregation tool. As an example, running the script with test *test_valid_chain.csv* as following:
 
 ```
 ./aggregation.py -t tests-aggregation/test_valid_chain.csv
