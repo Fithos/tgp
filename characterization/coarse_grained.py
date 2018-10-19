@@ -7,9 +7,10 @@ import csv
 
 helper = '''This script extracts useful information related to the execution of coarse-grained tasks. In particular, the script identifies classes spawning only coarse-grained tasks and, for each of them, computes the average task granularity, as well as the average amount of context switches and average CPU utilization experienced by the application during task execution. The script also computes the average amount of context switches occurred when no coarse-grained task was in execution.
 
-A class is considered as "spawning only coarse-grained tasks" if ALL tasks of such class satisfy the following conditions:
-(1) task granularity is within range [MIN_GRAN, MAX_GRAN]. Both limits are user-customizable, default range is [10^9, 10^11]
-(2) the number of tasks spawned by the class is within range [MIN_TASK_SPAWNED, MAX_TASK_SPAWNED]. Both limits are user-customizable, default range is [1, 100]
+A class is considered as "spawning only coarse-grained tasks" if ALL tasks of such class satisfy ALL the following conditions:
+
+  (1) task granularity is within range [MIN_GRAN, MAX_GRAN]. Both limits are user-customizable, default range is [10^9, 10^11]
+  (2) the number of tasks spawned by the class is within range [MIN_TASK_SPAWNED, MAX_TASK_SPAWNED]. Both limits are user-customizable, default range is [1, 100]
 
 The results are both printed to stardard output and written in a new trace (named 'coarse-grained.csv' by default).
 

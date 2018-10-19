@@ -312,7 +312,7 @@ To perform tasks aggregation on a task trace, enter the *postprocessing/* folder
 
 The script creates a new trace, called *aggregated task trace* (named *aggregated-tasks.csv* by default) containing the task trace after the aggregation step.
 
-The directory *postprocessing/tests-aggregation/* contains several test traces for the aggregation tool. As an example, running the script with test *test_valid_chain.csv* as following:
+The directory *postprocessing/tests-aggregation/* contains several test traces for the aggregation tool. As an example, running the script with test *test_valid_chain.csv* as follows:
 
 ```
 ./aggregation.py -t tests-aggregation/test_valid_chain.csv
@@ -327,7 +327,7 @@ ID,Class,Outer Task ID,Execution N.,Creation thread ID,Creation thread class,Cre
 
 Following the rules of task aggregation, 15 tasks out of 16 are aggregated, resulting in a single entry in the aggregated task trace.  
 
-**Note:** more details on the script and its parameters can be obtained by running  `./aggregation.py -h`.
+**Note:** more details on the script and its options can be obtained by running  `./aggregation.py -h`.
 
 #### Garbage-collection Filtering
 
@@ -343,10 +343,10 @@ The script creates two new traces (named *filtered-cs.csv* and *filtered-cpu.csv
 
 The directory *postprocessing/tests-gc-filtering/* contains several test traces for the filtering tool.
 
-As an example, running the script on the test traces *cs.csv*, *cpu_in_cs.csv*, and *gc_in_cs.csv* as following:
+As an example, running the script on the test traces *cs.csv*, *cpu_in_cs.csv*, and *gc_in_cs.csv* as follows:
 
 ```
-./gc-filtering.py --c tests-gc-filtering/cs.csv -p tests-gc-filtering/cpu_in_cs.csv -g tests-gc-filtering/gc_in_cs.csv
+./gc-filtering.py -c tests-gc-filtering/cs.csv -p tests-gc-filtering/cpu_in_cs.csv -g tests-gc-filtering/gc_in_cs.csv
 ```
 
 yields the following result (traces):
@@ -373,9 +373,9 @@ Timestamp (ns),CPU utilization (user),CPU utilization (system)
 7602317094530504,0.0,0.0
 ```
 
-This script filters out all context switches and all CPU measurements whose timestamp falls within GC cycles, resulting in only 7 (out of 22) and 5 (out of 24) entries in the filtered CS and CPU trace, respectively. 
+The script filters out all context switches and all CPU measurements whose timestamp falls within GC cycles, resulting in only 7 (out of 22) and 5 (out of 24) entries in the filtered CS and CPU trace, respectively. 
 
-**Note:** more details on the script and its parameters can be obtained by running `./gc-filtering.py -h`.
+**Note:** more details on the script and its options can be obtained by running `./gc-filtering.py -h`.
 
 ### Characterization
 
@@ -399,9 +399,9 @@ To perform diagnostics on tasks, enter the *characterization/* folder and type t
 ./diagnose.py -t <path to task trace> -c <path to CS trace> -p <path to CPU trace> [-o <path to result trace (output)>]
 ```
 
-The script creates a new trace (named *diagnostics.csv* by default) containing the described statistics. The results of the analysis will also be printed on the standard output.
+The script creates a new trace (named *diagnostics.csv* by default) containing the described statistics. The results of the analysis will also be printed to the standard output.
 
-As an example, running the script as following:
+As an example, running the script as follows:
 
 ```
 ./diagnose.py -t tests/test-tasks.csv -c tests/test-cs.csv -p tests/test-cpu.csv
@@ -411,31 +411,31 @@ yields the following result (stdout):
 
 ```
 TASKS STATISTICS
--> Total number of tasks: 29
--> Average granularity: 2965486.24138
--> 1st percentile - granularity: 4
--> 5th percentile - granularity: 12
--> 50th percentile (median) - granularity: 34436
--> 95th percentile - granularity: 2535634
--> 99th percentile - granularity: 34234523
--> IQC - granularity: 244672
--> Whiskers range - granularity: [0, 612242.0]
--> Percentage of tasks having granularity within whiskers range: 79.3103448276%
--> Percentage of tasks with granularity around 100000: 37.9310344828%
+-> Total number of tasks: 31 
+-> Average granularity: 1019943219.9 
+-> 1st percentile - granularity: 4 
+-> 5th percentile - granularity: 12 
+-> 50th percentile (median) - granularity: 34543 
+-> 95th percentile - granularity: 34234523 
+-> 99th percentile - granularity: 13038408322 
+-> IQC - granularity: 644794 
+-> Whiskers range - granularity: [0, 1612547.0] 
+-> Percentage of tasks having granularity within whiskers range: 80.6451612903% 
+-> Percentage of tasks with granularity around 100000: 35.4838709677%
 
 CONTEXT-SWITCHES STATISTICS
--> Average number of context switches: 141.567567568cs/100ms
+-> Average number of context switches: 148.957446809cs/100ms
 
 CPU STATISTICS
--> Average CPU utilization: 40.8868421053+-4.49185598114
+-> Average CPU utilization: 42.5583333333+-4.45480235225
 ```
 
-**Note:** more details on the script and its parameters (including those not shown here) can be obtained by running `./diagnose.py -h`.
+**Note:** more details on the script and its options (including those not shown here) can be obtained by running `./diagnose.py -h`.
 
 #### Fine-grained Tasks
 
 This script finds classes containing only fine-grained tasks based on user-defined thresholds. 
-For each such class, the script reports the average granularity of all tasks belonging to the class, and the average number of context switches occurred when tasks of the class were in execution. 
+For each such class, the script reports the average granularity of all tasks belonging to the class, and the average number of context switches occurred when tasks of the class were in execution. The script also computes the average amount of context switches occurred when no fine-grained task was in execution.
 
 To run this script, enter the *characterization/* folder and type the following command:
 
@@ -443,9 +443,9 @@ To run this script, enter the *characterization/* folder and type the following 
 ./fine_grained.py -t <path to task trace> -c <path to CS trace> [-o <path to result trace (output)>]
 ```
 
-The script creates a new trace (named *fine-grained.csv* by default). The results of the analysis will also be printed on the standard output.
+The script creates a new trace (named *fine-grained.csv* by default). The results of the analysis will also be printed to the standard output.
 
-As an example, running the script as following:
+As an example, running the script as follows:
 
 ```
 ./fine_grained.py -t tests/test-tasks.csv -c tests/test-cs.csv
@@ -465,12 +465,12 @@ Class: class3 -> Average granularity: 695149.666667 -> Average number of context
 Class: class1 -> Average granularity: 3860539.66667 -> Average number of context switches: 137.076923077cs/100ms
 ```
 
-**Note:** more details on the script and its parameters (including those not shown here) can be obtained by running `./fine_grained.py -h`.
+**Note:** more details on the script and its options (including those not shown here) can be obtained by running `./fine_grained.py -h`.
 
 #### Coarse-grained Tasks
 
 This script finds classes containing only coarse-grained tasks based on user-defined thresholds. 
-For each such class, the script reports the average granularity of all tasks belonging to the class, and the average number of context switches and CPU utilization experienced when tasks of the class were in execution.
+For each such class, the script reports the average granularity of all tasks belonging to the class, and the average number of context switches and CPU utilization experienced when tasks of the class were in execution. The script also computes the average amount of context switches occurred when no coarse-grained task was in execution.
 
 To run this script, enter the *characterization/* folder and type the following command:
 
@@ -478,9 +478,9 @@ To run this script, enter the *characterization/* folder and type the following 
 ./coarse_grained.py -t <path to task trace> -c <path to CS trace> -p <path to CPU trace> [-o <path to result trace (output)>]
 ```
 
-The script creates a new trace (named *coarse-grained.csv* by default). The results of the analysis will also be printed on the standard output.
+The script creates a new trace (named *coarse-grained.csv* by default). The results of the analysis will also be printed to the standard output.
 
-As an example, running the script as following:
+As an example, running the script as follows:
 
 ```
 ./coarse_grained.py -t tests/test-tasks.csv -c tests/test-cs.csv -p tests/test-cpu.csv
@@ -499,7 +499,7 @@ CLASSES CONTAINING COARSE-GRAINED TASKS:
    Average CPU utilization: 42.6816091954
 ```
 
-**Note:** more details on the script and its parameters (including those not shown here) can be obtained by running  `./coarse_grained.py -h`.
+**Note:** more details on the script and its options (including those not shown here) can be obtained by running  `./coarse_grained.py -h`.
 
 ## Additional Tests
 

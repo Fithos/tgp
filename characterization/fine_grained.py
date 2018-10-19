@@ -7,16 +7,16 @@ import csv
 
 helper = '''This script extracts useful information related to the execution of fine-grained tasks. In particular, the script identifies classes spawning only fine-grained tasks and, for each of them, computes the average task granularity and the average amount of context switches experienced by the application during task execution. The script also computes the average amount of context switches occurred when no fine-grained task was in execution.
         
-A class is considered as "spawning only fine-grained tasks" if ALL tasks of such class satisfy the following conditions:
+A class is considered as "spawning only fine-grained tasks" if ALL tasks of such class satisfy ALL the following conditions:
   (1) task granularity is smaller than or equal to MAX_GRAN (user-customizable)
   (2) the difference between the maximum and minimum task granularity is smaller than or equal MAX_DIFF (user-customizable)
-  (3) the number of tasks spawned by the class is greater than or equal to MIN_TASK_SPAWNED (user-customizable)
+  (3) the number of tasks spawned by the class is greater than or equal to MIN_TASKS_SPAWNED (user-customizable)
         
 The results are both printed to stardard output and written in a new trace (named 'fine-grained.csv' by default).
         
 Note: All input traces should have been produced by tgp with a SINGLE profiling run, either in the bytecode profiling or reference-cycles profiling mode.
 
-Usage: ./fine_grained.py -t <path to task trace> -c <path to CS trace> [-g <MAX_GRAN> -d <MAX_DIFF> -m <MIN_TASK_SPAWNED> -o <path to result trace (output)>]'''
+Usage: ./fine_grained.py -t <path to task trace> -c <path to CS trace> [-G <MAX_GRAN> -D <MAX_DIFF> -m <MIN_TASKS_SPAWNED> -o <path to result trace (output)>]'''
 
 #Default name for the output csv file
 DEFAULT_OUT_FILE = "fine-grained.csv"
@@ -225,9 +225,9 @@ if __name__ == "__main__":
     parser = OptionParser(helper)
     parser.add_option('-t', '--task', dest='tasksfile', type='string', help="path to the task trace containing data to be analyzed", metavar="TASK_TRACE")
     parser.add_option('-c', '--context-switches', dest='csfile', type='string', help="path to the CS trace containing data to be analyzed", metavar="CS_TRACE")
-    parser.add_option('-d', '--max-gran-diff', dest='margin', type='float', help="sets MAX_DIFF (10^8 by default)", metavar="MAX_DIFF")
+    parser.add_option('-D', '--max-gran-diff', dest='margin', type='float', help="sets MAX_DIFF (10^8 by default)", metavar="MAX_DIFF")
     parser.add_option('-m', '--min-task-spawned', dest='min_tasks_number', type='float', help="sets MIN_TASK_SPAWNED (0 by default)", metavar="MIN_TASK_SPAWNED")
-    parser.add_option('-g','--max-granularity', dest='max_granularity', type='long', help="sets MAX_GRAN (10^8 by default)", metavar="MAX_GRAN")
+    parser.add_option('-G','--max-granularity', dest='max_granularity', type='long', help="sets MAX_GRAN (10^8 by default)", metavar="MAX_GRAN")
     parser.add_option('-o', '--output', dest='output_file', type='string', help="the path to the output trace containing the results. If none is provided, then the output trace will be produced in './fine-grained.csv'", metavar="RESULT_TRACE")
     (options, arguments) = parser.parse_args()
     if (options.tasksfile is None):

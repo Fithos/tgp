@@ -6,20 +6,20 @@ import sys
 import csv
 import math
 
-helper = '''This scripts performs basic statistical analysis on task granularity, based on the input task, CS, and CPU traces. The analysis focuses on the average granularity of executed tasks, its distribution, and its closedness to a specific granularity value. The analysis also computes the average number of context switches and CPU utilization experienced during task execution.
+helper = '''This script performs basic statistical analysis on task granularity, based on the input task, CS, and CPU traces. The analysis focuses on the average granularity of executed tasks, its distribution, and its closedness to a specific granularity value. The analysis also computes the average number of context switches and CPU utilization experienced during task execution.
         
 The results are both printed to stardard output and written in a new trace (named 'diagnostics.csv' by default).
         
 Note: All input traces should have been produced by tgp with a SINGLE profiling run, either in the bytecode profiling or reference-cycles profiling mode.
 
-Usage: ./diagnose.py -t <path to task trace> -c <path to CS trace> -p <path to CPU trace> [-s <class name> -g <centre granularity> -o <path to result trace (output)>]'''
+Usage: ./diagnose.py -t <path to task trace> -c <path to CS trace> -p <path to CPU trace> [-s <class name> -g <central granularity> -o <path to result trace (output)>]'''
 
 
 
 #By default, the analysis does not focus on any class.
 DEFAULT_SPECIFIC_CLASS = "null"
-#Default centre granularity
-DEFAULT_CENTRE_GRAN = 100000
+#Default central granularity
+DEFAULT_CENTRAL_GRAN = 100000
 #The default name of the output result file
 DEFAULT_OUT_FILE = "diagnostics.csv"
 
@@ -195,11 +195,11 @@ def gran_percentage_in_range(low_w, high_w):
 
 def in_specified_range():
     '''
-    Computes the number of tasks with granularity having the same order of magnitude as gran_centre.
+    Computes the number of tasks with granularity having the same order of magnitude as gran_central.
     '''
     count = 0
     for task in tasks:
-        if gran_centre > 0 and (abs(math.log(gran_centre, 10) - math.log(task.this_gran, 10)) <= 1):
+        if gran_central > 0 and (abs(math.log(gran_central, 10) - math.log(task.this_gran, 10)) <= 1):
             count += 1
     return count
 
@@ -240,7 +240,7 @@ def tasks_statistics():
        percentage_range = gran_percentage_in_range(low_w, high_w)
        avg = total_grans/len(tasks)
        percentage = (in_specified_range()/len(tasks))*100
-   res = "-> Total number of tasks: " + str(exec_tasks) + " \n-> Average granularity: " + str(avg) + " \n-> 1st percentile - granularity: " + str(one_percentile) + " \n-> 5th percentile - granularity: " + str(five_percentile) + " \n-> 50th percentile (median) - granularity: " + str(median) + " \n-> 95th percentile - granularity: " + str(ninetyfive_percentile) + " \n-> 99th percentile - granularity: " + str(ninetynine_percentile) + " \n-> IQC - granularity: " + str(inter_quartile) + " \n-> Whiskers range - granularity: [" + str(low_w) + ", " + str(high_w) + "] \n-> Percentage of tasks having granularity within whiskers range: " + str(percentage_range) + "% \n-> Percentage of tasks with granularity around " + str(gran_centre) + ": " + str(percentage) + "%"
+   res = "-> Total number of tasks: " + str(exec_tasks) + " \n-> Average granularity: " + str(avg) + " \n-> 1st percentile - granularity: " + str(one_percentile) + " \n-> 5th percentile - granularity: " + str(five_percentile) + " \n-> 50th percentile (median) - granularity: " + str(median) + " \n-> 95th percentile - granularity: " + str(ninetyfive_percentile) + " \n-> 99th percentile - granularity: " + str(ninetynine_percentile) + " \n-> IQC - granularity: " + str(inter_quartile) + " \n-> Whiskers range - granularity: [" + str(low_w) + ", " + str(high_w) + "] \n-> Percentage of tasks having granularity within whiskers range: " + str(percentage_range) + "% \n-> Percentage of tasks with granularity around " + str(gran_central) + ": " + str(percentage) + "%"
    print(res)
    res_dict = {}
    res_dict["Total number of tasks"] = str(exec_tasks)
@@ -254,8 +254,8 @@ def tasks_statistics():
    res_dict["Lower whiskers range - granularity"] = str(low_w)
    res_dict["Upper whiskers range - granularity"] = str(high_w)
    res_dict["Percentage of tasks having granularity within whiskers range"] = str(percentage_range)
-   res_dict["Centre granularity"] = str(gran_centre)
-   res_dict["Percentage of tasks with granularity around centre granularity"] = str(percentage)
+   res_dict["Central granularity"] = str(gran_central)
+   res_dict["Percentage of tasks with granularity around central granularity"] = str(percentage)
    return res_dict
 
 def cs_statistics():
@@ -365,8 +365,8 @@ if __name__ == "__main__":
     parser.add_option('-t', '--task', dest='tasks_file', type='string', help="path to the task trace containing data to be analyzed", metavar="TASK_TRACE")
     parser.add_option('-c', '--context-switches', dest='cs_file', type='string', help="path to the CS trace containing data to be analyzed", metavar="CS_TRACE")
     parser.add_option('-p', '--cpu', dest='cpu_file', type='string', help="path to the CPU trace containing data to be analyzed", metavar="CPU_TRACE")
-    parser.add_option('-s', '--specific-class', dest='specific_class', type='string', help="a specific class on which to focus the analysis. For example, if '--sc ExampleClass' is passed, then all statistics will refer only to tasks of class 'ExampleClass', ignoring all other tasks. If the script should analyze all tasks, then this parameter should not be set (or should be set to 'null', which is the default value)", metavar="CLASS")
-    parser.add_option('-g','--centre-granularity', dest='gran_centre', type='long', help="specifies the 'centre granularity'. The script computes the percentage of tasks whose granularity has the same order as the centre granularity. Setting this parameter allows users to change the centre granularity (which is 10^5 by default).", metavar="CENTRE_GRAN")
+    parser.add_option('-s', '--specific-class', dest='specific_class', type='string', help="a specific class on which to focus the analysis. For example, if '-s ExampleClass' is passed, then all statistics will refer only to tasks of class 'ExampleClass', ignoring all other tasks. If the script should analyze all tasks, then this option should not be set (or should be set to 'null', which is the default value)", metavar="CLASS")
+    parser.add_option('-g','--central-granularity', dest='gran_central', type='long', help="specifies the 'central granularity'. The script computes the percentage of tasks whose granularity has the same order as the central granularity. Setting this parameter allows users to change the central granularity (which is 10^5 by default).", metavar="CENTRAL_GRAN")
     parser.add_option('-o', '--output', dest='output_file', type='string', help="the path to the output trace containing the results. If none is provided, then the output trace will be produced in './diagnostics.csv'", metavar="RESULT_TRACE")
     (options, arguments) = parser.parse_args()
     if (options.tasks_file is None):
@@ -388,10 +388,10 @@ if __name__ == "__main__":
         specific_class = DEFAULT_SPECIFIC_CLASS
     else:
         specific_class = options.specific_class
-    if (options.gran_centre is None):
-        gran_centre = DEFAULT_CENTRE_GRAN
+    if (options.gran_central is None):
+        gran_central = DEFAULT_CENTRAL_GRAN
     else:
-        gran_centre = options.gran_centre
+        gran_central = options.gran_central
     if (options.output_file is None):
         output_file = DEFAULT_OUT_FILE
     else:
