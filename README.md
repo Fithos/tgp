@@ -477,7 +477,7 @@ For each such class, the script reports the average granularity of all tasks bel
 To run this script, enter the *characterization/* folder and type the following command:
 
 ```
-./coarse_grained.py -t <path to task trace> --cs <path to CS trace> --cpu <path to CPU trace> [-o <path to results trace>]
+./coarse_grained.py -t <path to task trace> -c <path to CS trace> -p <path to CPU trace> [-o <path to result trace (output)>]
 ```
 
 The script creates a new trace (named *coarse-grained.csv* by default). The results of the analysis will also be printed on the standard output.
@@ -485,27 +485,23 @@ The script creates a new trace (named *coarse-grained.csv* by default). The resu
 As an example, running the script as following:
 
 ```
-./coarse_grained.py -t tests/test-tasks.csv --cs tests/test-cs.csv --cpu tests/test-cpu.csv --mg 1000 --Mg 1000000 --mt 0 --Mt 1000
+./coarse_grained.py -t tests/test-tasks.csv -c tests/test-cs.csv -p tests/test-cpu.csv
 ```
 
 yields the following result (stdout):
 
 ```
-Average number of context switches experienced when coarse-grained tasks are not in execution: 149.976190476cs/100ms
+Average number of context switches experienced when coarse-grained tasks are not in execution: 119.333333333cs/100ms
 
 CLASSES CONTAINING COARSE-GRAINED TASKS:
 
--> Class: class6
-   Average granularity: 1443.0
-   Average number of context switches: 197.5cs/100ms
-   Average CPU utilization: 38.2
--> Class: class5
-   Average granularity: 301304.666667
-   Average number of context switches: 129.8cs/100ms
-   Average CPU utilization: 34.45
+-> Class: class8
+   Average granularity: 15766120358.0
+   Average number of context switches: 154.11627907cs/100ms
+   Average CPU utilization: 42.6816091954
 ```
 
-**Note:** more details on the script and its parameters (including those not shown here) can be found in *characterization/coarse_grained.py*, in the documentation section. Alternatively, run `./coarse_grained.py -h`.
+**Note:** more details on the script and its parameters (including those not shown here) can be obtained by running  `./coarse_grained.py -h`.
 
 ## Additional Tests
 

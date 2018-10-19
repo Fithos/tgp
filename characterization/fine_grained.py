@@ -5,9 +5,7 @@ from optparse import OptionParser
 import sys
 import csv
 
-helper = '''Usage: ./fine_grained.py -t <path to task trace> -c <path to CS trace> [-g <MAX_GRAN> -d <MAX_DIFF> -m <MIN_TASK_SPAWNED> -o <path to result trace (output)>]
-        
-This script extracts useful information related to the execution of fine-grained tasks. In particular, the script identifies classes spawning only fine-grained tasks and, for each of them, computes the average task granularity and the average amount of context switches experienced by the application during task execution. The script also computes the average amount of context switches occurred when no fine-grained task was in execution.
+helper = '''This script extracts useful information related to the execution of fine-grained tasks. In particular, the script identifies classes spawning only fine-grained tasks and, for each of them, computes the average task granularity and the average amount of context switches experienced by the application during task execution. The script also computes the average amount of context switches occurred when no fine-grained task was in execution.
         
 A class is considered as "spawning only fine-grained tasks" if ALL tasks of such class satisfy the following conditions:
   (1) task granularity is smaller than or equal to MAX_GRAN (user-customizable)
@@ -17,7 +15,8 @@ A class is considered as "spawning only fine-grained tasks" if ALL tasks of such
 The results are both printed to stardard output and written in a new trace (named 'fine-grained.csv' by default).
         
 Note: All input traces should have been produced by tgp with a SINGLE profiling run, either in the bytecode profiling or reference-cycles profiling mode.
-'''
+
+Usage: ./fine_grained.py -t <path to task trace> -c <path to CS trace> [-g <MAX_GRAN> -d <MAX_DIFF> -m <MIN_TASK_SPAWNED> -o <path to result trace (output)>]'''
 
 #Default name for the output csv file
 DEFAULT_OUT_FILE = "fine-grained.csv"

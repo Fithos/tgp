@@ -6,14 +6,13 @@ import sys
 import csv
 import math
 
-helper = '''Usage: ./diagnose.py -t <path to task trace> -c <path to CS trace> -p <path to CPU trace> [-s <class name> -g <centre granularity> -o <path to result trace (output)>]
-        
-This scripts performs basic statistical analysis on task granularity, based on the input task, CS, and CPU traces. The analysis focuses on the average granularity of executed tasks, its distribution, and its closedness to a specific granularity value. The analysis also computes the average number of context switches and CPU utilization experienced during task execution.
+helper = '''This scripts performs basic statistical analysis on task granularity, based on the input task, CS, and CPU traces. The analysis focuses on the average granularity of executed tasks, its distribution, and its closedness to a specific granularity value. The analysis also computes the average number of context switches and CPU utilization experienced during task execution.
         
 The results are both printed to stardard output and written in a new trace (named 'diagnostics.csv' by default).
         
 Note: All input traces should have been produced by tgp with a SINGLE profiling run, either in the bytecode profiling or reference-cycles profiling mode.
-'''
+
+Usage: ./diagnose.py -t <path to task trace> -c <path to CS trace> -p <path to CPU trace> [-s <class name> -g <centre granularity> -o <path to result trace (output)>]'''
 
 
 

@@ -5,30 +5,17 @@ from optparse import OptionParser
 import sys
 import csv
 
-'''
-This program associates to each class containing only coarse-grained tasks the average granularity, the average number of context switches, and the average CPU utilization (taking into account both user and kernel components).
-A class is considered coarse-grained if all its tasks comply to the following rules:
--> all their granularities are within a specified range
--> their number is within a specified range
+helper = '''This script extracts useful information related to the execution of coarse-grained tasks. In particular, the script identifies classes spawning only coarse-grained tasks and, for each of them, computes the average task granularity, as well as the average amount of context switches and average CPU utilization experienced by the application during task execution. The script also computes the average amount of context switches occurred when no coarse-grained task was in execution.
 
-For each class, the program associates the total granularity, the total number of context switches, and the average CPU utilization (taking into account both user and kernel components).
+A class is considered as "spawning only coarse-grained tasks" if ALL tasks of such class satisfy the following conditions:
+(1) task granularity is within range [MIN_GRAN, MAX_GRAN]. Both limits are user-customizable, default range is [10^9, 10^11]
+(2) the number of tasks spawned by the class is within range [MIN_TASK_SPAWNED, MAX_TASK_SPAWNED]. Both limits are user-customizable, default range is [1, 100]
 
-The result is both printed on the standard output and written to a new trace (named 'coarse-grained.csv' by default).
+The results are both printed to stardard output and written in a new trace (named 'coarse-grained.csv' by default).
 
-Usage: ./coarse_grained.py -t <path to tasks trace> --cs <path to context switches trace> --cpu <path to CPU trace> [--mg <minimum task granularity> --Mg <maximum task granularity> -o <path to results trace>]
+Note: All input traces should have been produced by tgp with a SINGLE profiling run, either in the bytecode profiling or reference-cycles profiling mode.
 
-Parameters:
--> -t: the task trace on which one would like to check which ones are coarse-grained
--> --cs: the context switches trace
--> --cpu: the CPU trace
-Note: files 'path/to/task trace', 'path/to/context switches trace', and 'path/to/CPU trace' should be produced by the same profiling run.
-Optional parameters:
--> --mg: the minimum granularity a task must have to be considered coarse-grained. By default this value is 1000000000 (10^9)
--> --Mg: the maximum granularity a task must have to be considered coarse-grained. By default this value is 100000000000 (10^11)
--> --mt: the minimum number of tasks a class must have to be considered coarse-grained. By default this value is 10
--> --Mt: the maximum number of tasks a class must have to be considered coarse-grained. By default this value is 10000
--> -o: the name of the trace containing the results of the analysis. If none is provided, then the output trace will be named 'coarse-grained.csv'
-'''
+Usage: ./coarse_grained.py -t <path to task trace> -c <path to CS trace> -p <path to CPU trace> [-g <MIN_GRAN> -G <MAX_GRAN> -s <MIN_TASK_SPAWNED> -S <MAX_TASK_SPAWNED> -o <path to result trace (output)>]'''
 
 #Default name for the output csv file
 DEFAULT_OUT_FILE = "coarse-grained.csv"
@@ -37,35 +24,35 @@ DEFAULT_MIN_GRAN = 1000000000
 #Default maximum granularity
 DEFAULT_MAX_GRAN = 100000000000
 #Default minimum number of tasks
-DEFAULT_MIN_TASKS = 10
+DEFAULT_MIN_TASKS = 1
 #Default maximum number of tasks
-DEFAULT_MAX_TASKS = 10000
+DEFAULT_MAX_TASKS = 100
 
-#Number of fields in the tasks file
+#Number of columns in the task trace
 FIELDS_TASK = 22
-#Number of fields in the context-switches file
+#Number of columns in the CS trace
 FIELDS_CS = 2
-#Number of fields in the CPU file
+#Number of columns in the CPU trace
 FIELDS_CPU = 3
 
-#A dictionary associating a class name to an array of Task instances, which are 'contained' in said class
+#A dictionary associating a class name to a list of Task instances, which belong to such class
 classes = {}
 
-#A dictionary associating a class name to an array of Task instances. In this dictionary there are only classes containing only coarse-grained tasks
+#A dictionary associating a class name to an array of Task instances. In this dictionary are stored only classes containing only coarse-grained tasks
 coarseclasses = {}
 
-#A dictionary associating a class name to an array of Task instance. This dictionary is used to compute the average number of context-switches occurring during non-coarse-grained classes' tasks execution.
+#A dictionary associating a class name to an array of Task instance. This dictionary is used to compute the average number of context switches occurring when no coarse-grained task was in execution.
 notcoarseclasses = {}
 
-#An array containing ContextSwitch instances
+#A list containing ContextSwitch instances
 contextswitches = []
 
-#An array containing CPU instances
+#A list containing CPU instances
 cpus = []
 
 class Task:
     '''
-    A class containing some of the data from the tasks csv file. It contains data relevant to this analysis.
+    A class containing relevant data taken from the task trace.
     '''
     def __init__(self, this_id, this_class, this_entrytime, this_exittime, this_granularity):
         self.this_id = this_id
@@ -76,7 +63,7 @@ class Task:
 
 class ContextSwitch:
     '''
-    A class containing the same data as the csv file for context-switches.
+    A class containing data taken from the CS trace.
     '''
     def __init__(self, this_time, this_cs):
         self.this_time = this_time
@@ -84,7 +71,7 @@ class ContextSwitch:
 
 class CPU:
     '''
-    A class containing the same data as csv file for CPU utilization.
+    A class containing data taken from the CPU trace.
     '''
     def __init__(self, this_time, this_usr, this_sys):
         self.this_time = this_time
@@ -104,7 +91,7 @@ def contains_letters(string):
 
 def read_tasks():
     '''
-    Reads the specified tasks csv file and sets up the classes dictionary.
+    Reads the task trace and sets up the dictionary.
     '''
     linecounter = 0
     with open (tasksfile) as csvfile:
@@ -112,7 +99,7 @@ def read_tasks():
         for row in csvreader:
             if len(row) != FIELDS_TASK:
                 print("Wrong task trace format")
-                exit(0)
+                exit(-1)
             if linecounter > 0:
                 if contains_letters(row[0]):
                     continue
@@ -135,14 +122,14 @@ def read_tasks():
 
 def read_cs():
     '''
-    Reads the specified csv file for context-switches.
+    Reads the CS trace and sets up the dictionary.
     '''
     with open (csfile) as csvfile:
         csvreader = csv.reader(csvfile)
         for row in csvreader:
             if len(row) != FIELDS_CS:
-                print("Wrong context switches trace format")
-                exit(0)
+                print("Wrong CS trace format")
+                exit(-1)
             if contains_letters(row[0]):
                 continue
             this_time = float(row[0])
@@ -153,7 +140,7 @@ def read_cs():
 
 def read_cpu():
     '''
-    Reads the specified csv file for CPU utilization.
+    Reads the CPU trace and sets up the dictionary.
     '''
     with open (cpufile) as csvfile:
         csvreader = csv.reader(csvfile)
@@ -174,7 +161,7 @@ def read_cpu():
 
 def coarsegrained():
     '''
-    For each class in the classes dictionary this function counts the number of coarse-grained tasks, which are used to set up the dictionary for the coarse-grained classes.
+    For each class in the classes dictionary, this function counts the number of coarse-grained tasks, which are used to set up the dictionary for the coarse-grained classes.
     '''
     for key in classes:
         tasks = classes[key]
@@ -188,8 +175,7 @@ def coarsegrained():
 
 def context_switches_not_in_coarsegrained():
     '''
-    Computes the average of context switches occurring outside coarse-grained tasks execution.
-    Return such an average.
+    Returns the average number of context switches occurring when coarse-grained tasks are not in execution.
     '''
     cs_num = 0
     cs_total = 0
@@ -213,8 +199,7 @@ def context_switches_not_in_coarsegrained():
 
 def class_analysis(tasks):
     '''
-    Computes the analysis for a class. More specifically, for each class this function computes the total granularity, the number of context-switches, and the average CPU utilization.
-    Returns an array containing the total granularity, the number of context-switches, and the average CPU utlilization.
+    Performs the analysis on coarse-grained tasks. More specifically, for each class, this function computes the total granularity, the number of context switches, and the average CPU utilization, returning them in a list.
     '''
     total_cs = 0
     total_css = 0
@@ -246,12 +231,12 @@ def class_analysis(tasks):
 
 def output_results():
     '''
-    Writes to a csv file and prints the results of the analisys on the standard output.
+    Writes results to a csv file and prints them to standard output.
     '''
     contents = []
     print("")
     avg_cs_out = context_switches_not_in_coarsegrained()
-    print("Average number of context switches outside non-coarse-grained classes: %s" % str(avg_cs_out))
+    print("Average number of context switches experienced when coarse-grained tasks are not in execution: %scs/100ms" % str(avg_cs_out))
     print("")
     print("CLASSES CONTAINING COARSE-GRAINED TASKS:")
     print("")
@@ -262,7 +247,7 @@ def output_results():
         print("-> Class: %s \n   Average granularity: %s \n   Average number of context switches: %s \n   Average CPU utilization: %s" % (key, str(res[0]), str(res[1]) + "cs/100ms", str(res[2])))
         content["Class"] = key
         content["Average granularity"] = str(res[0])
-        content["Average number of context switches"] = str(res[1]) + "cs/100ms"
+        content["Average number of context switches"] = str(res[1])
         content["Average CPU utilization"] = str(res[2])
         contents.append(content)
     print("")
@@ -275,15 +260,15 @@ def output_results():
 
 if __name__ == "__main__":
     #Flags parser
-    parser = OptionParser('usage: -t <input tasks csv file> --cs <path to context switches trace> --cpu <path to CPU trace> [--mg <minimum task granularity> --Mg <maximum task granularity> -o <path to results trace>]')
-    parser.add_option('-t', dest='tasksfile', type='string', help="the task trace on which one would like to check which ones are coarse-grained")
-    parser.add_option('--cs', dest='csfile', type='string', help="the context switches trace")
-    parser.add_option('--cpu', dest='cpufile', type='string', help="the CPU trace")
-    parser.add_option('--mg', dest='min_granularity', type='long', help="the minimum granularity a task must have to be considered coarse-grained. By default this value is 1000000000 (10^9)")
-    parser.add_option('--Mg', dest='max_granularity', type='long', help="the maximum granularity a task must have to be considered coarse-grained. By default this value is 100000000000 (10^11)")
-    parser.add_option('--mt', dest='min_tasks', type='long', help="the minimum number of tasks a class must have to be considered coarse-grained. By default this value is 10")
-    parser.add_option('--Mt', dest='max_tasks', type='long', help="the maximum number of tasks a class must have to be considered coarse-grained. By default this value is 10000")
-    parser.add_option('-o', dest='output_file', type='string', help="the name of the trace containing the results of the analysis. If none is provided, then the output trace will be named 'coarse-grained.csv'")
+    parser = OptionParser(helper)
+    parser.add_option('-t', '--task', dest='tasksfile', type='string', help="path to the task trace containing data to be analyzed", metavar="TASK_TRACE")
+    parser.add_option('-c', '--context-switches', dest='csfile', type='string', help="path to the CS trace containing data to be analyzed", metavar="CS_TRACE")
+    parser.add_option('-p', '--cpu', dest='cpufile', type='string', help="path to the CPU trace containing data to be analyzed", metavar="CPU_TRACE")
+    parser.add_option('-g', '--min-granularity', dest='min_granularity', type='long', help="sets MIN_GRAN (10^9 by default)", metavar="MIN_GRAN")
+    parser.add_option('-G', '--max-granularity', dest='max_granularity', type='long', help="sets MAX_GRAN (10^11 by default)", metavar="MAX_GRAN")
+    parser.add_option('-s', '--min-task-spawned', dest='min_tasks', type='long', help="sets MIN_TASK_SPAWNED (1 by default)", metavar="MIN_TASK_SPAWNED")
+    parser.add_option('-S', '--max-task-spawned', dest='max_tasks', type='long', help="sets MAX_TASK_SPAWNED (100 by default)", metavar="MAX_TASK_SPAWNED")
+    parser.add_option('-o', '--output', dest='output_file', type='string', help="the path to the output trace containing the results. If none is provided, then the output trace will be produced in './coarse-grained.csv'", metavar="RESULT_TRACE")
     (options, arguments) = parser.parse_args()
     if (options.tasksfile is None):
         print parser.usage
@@ -333,3 +318,4 @@ if __name__ == "__main__":
     read_cpu()
 
     output_results()
+

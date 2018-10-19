@@ -4,9 +4,7 @@ from optparse import OptionParser
 import sys
 import csv
 
-helper='''Usage: ./aggregation.py -t <path to task trace> [-o <path to aggregated task trace (output)>]
-    
-Some tasks may be nested, i.e., they fully execute inside the dynamic extent of the execution method of another task, which is called outer task. This script performs task aggregation, i.e., aggregates a nested task to its outer task.
+helper='''Some tasks may be nested, i.e., they fully execute inside the dynamic extent of the execution method of another task, which is called outer task. This script performs task aggregation, i.e., aggregates a nested task to its outer task.
 
 As a result of this operation, the granularity of the nested task is summed up to the one of its outer task.
 Task aggregation is performed on nested tasks if one of the following conditions is satisfied:
@@ -19,7 +17,8 @@ Task aggregation is performed on nested tasks if one of the following conditions
 To perform aggregation, tasks are modelled in a directed graph, where an edge connects a nested task to its outer task. Topological sort is then used to aggregate tasks matching the conditions above.
 
 This script produces a new trace (called 'aggregated task trace' and named 'aggregated-tasks.csv' by default) containing the task trace after the aggregation step.
-'''
+
+Usage: ./aggregation.py -t <path to task trace> [-o <path to aggregated task trace (output)>]'''
 
 #Default name of aggregated task trace
 DEFAULT_OUT_FILE = "aggregated-tasks.csv"

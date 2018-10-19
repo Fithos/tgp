@@ -4,14 +4,13 @@ from optparse import OptionParser
 import sys
 import csv
 
-helper = '''Usage: ./gc-filtering.py -c <path to CS trace> -p <path to CPU trace> -g <path to GC trace> [--outcs <path to filtered CS trace (output)> --outcpu <path to filtered CPU trace (output)>]
-    
-This script filters the CS and the CPU traces, eliminating measurements obtained during GC cycles.
+helper = '''This script filters the CS and the CPU traces, eliminating measurements obtained during GC cycles.
 
 The script produces two new traces (named 'filtered-cs.csv' and 'filtered-cpu.csv' by default), containing the filtered CS and CPU measurements, respectively.
 
 Note: All input traces should have been produced by tgp with a SINGLE profiling run, either in the bytecode profiling or reference-cycles profiling mode.
-'''
+
+Usage: ./gc-filtering.py -c <path to CS trace> -p <path to CPU trace> -g <path to GC trace> [--outcs <path to filtered CS trace (output)> --outcpu <path to filtered CPU trace (output)>]'''
 
 #Default name of the output filtered CS trace
 DEFAULT_CS_OUT_FILE = "filtered-cs.csv"
