@@ -1,5 +1,3 @@
-*IMPORTANT*: this branch is under development and is being actively modified. 
-
 # tgp
 
 *tgp* is a task-granularity profiler for multi-threaded, task-parallel applications running on the Java Virtual Machine (JVM).
