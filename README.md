@@ -540,4 +540,4 @@ leaving all other variables commented.
  * Eduardo Rosales (rosale [at] usi [dot] ch)
  * Federico van Swaaij (federico [dot] van [dot] swaaij [at] usi [dot] ch)
 
-**Note**: Please refer to this [article](https://doi.org/10.1145/3168828) for additional information about *tgp*.
+**Note**: Please refer to this [article](https://dl.acm.org/doi/10.1145/3338497) for additional information about *tgp*.
